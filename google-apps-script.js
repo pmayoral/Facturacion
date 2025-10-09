@@ -1,9 +1,3 @@
-// Código para Google Apps Script
-// 1. Ve a https://script.google.com
-// 2. Crea un nuevo proyecto
-// 3. Pega este código
-// 4. Guarda y despliega como Web App
-
 function doPost(e) {
   try {
     // ID de tu Google Sheets
@@ -35,6 +29,11 @@ function doPost(e) {
     // Manejar acciones específicas para emisores
     if (data.action === 'saveEmisor') {
       return handleSaveEmisor(data.data);
+    }
+    
+    // Manejar reordenamiento de filas
+    if (data.action === 'reorderRows') {
+      return handleReorderRows(data);
     }
     
     // Si hay items detallados, crear una fila por cada item
@@ -598,15 +597,60 @@ function deleteEmisor(emisorId) {
   }
 }
 
-// INSTRUCCIONES DE DESPLIEGUE:
-// 1. Guarda el proyecto con Ctrl+S (o Cmd+S en Mac)
-// 2. Haz clic en "Implementar" > "Nueva implementación"
-// 3. En "Tipo" selecciona "Aplicación web"
-// 4. Configuración:
-//    - Descripción: "API Facturas TBAI"
-//    - Ejecutar como: "Yo" (tu cuenta)
-//    - Quién tiene acceso: "Cualquiera"
-// 5. Haz clic en "Implementar"
-// 6. Autoriza los permisos cuando se solicite
-// 7. Copia la URL del Web App que aparecerá
-// 8. Pega esa URL en el archivo HTML donde dice WEB_APP_URL
+// Reordenar filas según el orden actual del listado
+function handleReorderRows(data) {
+  try {
+    const SPREADSHEET_ID = '1qCDvaMEERQ3lm1MLWQnl2TblwtxA-17hoFo8leG70kg';
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getActiveSheet();
+    
+    const sortedData = data.data;
+    const headers = data.headers;
+    
+    if (!sortedData || !Array.isArray(sortedData) || sortedData.length === 0) {
+      return ContentService
+        .createTextOutput(JSON.stringify({
+          result: 'error',
+          error: 'No se proporcionaron datos válidos para reordenar'
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // Obtener el rango de datos actual (sin incluir cabeceras)
+    const lastRow = sheet.getLastRow();
+    
+    if (lastRow > 1) {
+      // Limpiar datos existentes (excepto cabeceras)
+      sheet.deleteRows(2, lastRow - 1);
+    }
+    
+    // Preparar los datos en el nuevo orden
+    const newRows = sortedData.map(invoice => {
+      return headers.map(header => invoice[header] || '');
+    });
+    
+    // Insertar todos los datos de una vez para mejor rendimiento
+    if (newRows.length > 0) {
+      sheet.getRange(2, 1, newRows.length, headers.length).setValues(newRows);
+    }
+    
+    console.log(`${newRows.length} filas reordenadas correctamente`);
+    
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        result: 'success',
+        message: `${newRows.length} filas reordenadas correctamente`,
+        rowsReordered: newRows.length
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+  } catch (error) {
+    console.error('Error al reordenar filas:', error);
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        result: 'error',
+        error: error.toString(),
+        message: 'Error al reordenar las filas'
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
