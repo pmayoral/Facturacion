@@ -3315,6 +3315,15 @@
                 payload.isUpdate = false;
             }
             
+            // 🔍 DEBUG: Ver qué se envía
+            console.log('📤 Enviando al servidor:', {
+                numero: payload.numero,
+                isUpdate: payload.isUpdate,
+                deleteRows: payload.deleteRows,
+                textoLibre: payload.textoLibre ? payload.textoLibre.substring(0, 30) + '...' : '(vacío)',
+                itemsDetail: payload.itemsDetail ? payload.itemsDetail.length + ' items' : 'sin items'
+            });
+            
             // Enviar al Web App
             fetch(WEB_APP_URL, {
                 method: 'POST',
@@ -3473,6 +3482,15 @@
                 console.log('⚠️ No se pudo verificar facturas existentes, se guardará como nueva:', error);
                 payload.isUpdate = false;
             }
+            
+            // 🔍 DEBUG: Ver qué se envía
+            console.log('📤 Enviando al servidor (manual):', {
+                numero: payload.numero,
+                isUpdate: payload.isUpdate,
+                deleteRows: payload.deleteRows,
+                textoLibre: payload.textoLibre ? payload.textoLibre.substring(0, 30) + '...' : '(vacío)',
+                itemsDetail: payload.itemsDetail ? payload.itemsDetail.length + ' items' : 'sin items'
+            });
             
             fetch(WEB_APP_URL, {
                 method: 'POST',
