@@ -2380,8 +2380,8 @@
         }
         
         function formatNumberForSheet(number) {
-            // Para guardar en Google Sheets: número puro con punto decimal
-            return Number(number).toFixed(2);
+            // Para guardar en Google Sheets: número puro (tipo Number, no String)
+            return Number(number);
         }
 
         // ========== FUNCIONES DEL EDITOR DE TEXTO ENRIQUECIDO ==========
