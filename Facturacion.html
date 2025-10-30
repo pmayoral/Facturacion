@@ -3300,15 +3300,19 @@
                     // Solo enviar deleteRows si hay cambios
                     if (hasChanges) {
                         payload.deleteRows = existingRows.map(r => r.rowIndex);
+                        payload.isUpdate = true; // Marcar como actualización
                         console.log('🔄 Cambios detectados. Se actualizarán ' + existingRows.length + ' filas.');
                     } else {
                         console.log('✅ No hay cambios. No se actualizará nada.');
                         showNotification('✅ La factura ya existe sin cambios', 'info');
                         return; // No continuar con el guardado
                     }
+                } else {
+                    payload.isUpdate = false; // Marcar como nueva
                 }
             } catch (error) {
                 console.log('⚠️ No se pudo verificar facturas existentes, se guardará como nueva:', error);
+                payload.isUpdate = false;
             }
             
             // Enviar al Web App
@@ -3328,8 +3332,11 @@
             .then(data => {
                 if (data.result === 'success') {
                     // Factura guardada correctamente
-                    // Notificación de éxito
-                    showNotification('✅ Factura guardada/actualizada correctamente en Google Sheets', 'success');
+                    // Notificación según si es nueva o actualización
+                    const mensaje = payload.isUpdate ? 
+                        '✅ Factura MODIFICADA correctamente en Google Sheets' : 
+                        '✅ Factura NUEVA guardada correctamente en Google Sheets';
+                    showNotification(mensaje, 'success');
                 } else {
                     throw new Error(data.error || 'Error al guardar');
                 }
@@ -3452,15 +3459,19 @@
                     // Solo enviar deleteRows si hay cambios
                     if (hasChanges) {
                         payload.deleteRows = existingRows.map(r => r.rowIndex);
+                        payload.isUpdate = true; // Marcar como actualización
                         console.log('🔄 Cambios detectados. Se actualizarán ' + existingRows.length + ' filas.');
                     } else {
                         console.log('✅ No hay cambios. No se actualizará nada.');
                         showNotification('✅ La factura ya existe sin cambios', 'info');
                         return; // No continuar con el guardado
                     }
+                } else {
+                    payload.isUpdate = false; // Marcar como nueva
                 }
             } catch (error) {
                 console.log('⚠️ No se pudo verificar facturas existentes, se guardará como nueva:', error);
+                payload.isUpdate = false;
             }
             
             fetch(WEB_APP_URL, {
@@ -3473,7 +3484,10 @@
             .then(response => response.json())
             .then(data => {
                 if (data.result === 'success') {
-                    showNotification('✅ Factura guardada/actualizada correctamente en Google Sheets', 'success');
+                    const mensaje = payload.isUpdate ? 
+                        '✅ Factura MODIFICADA correctamente en Google Sheets' : 
+                        '✅ Factura NUEVA guardada correctamente en Google Sheets';
+                    showNotification(mensaje, 'success');
                 } else {
                     throw new Error(data.error || 'Error desconocido');
                 }
