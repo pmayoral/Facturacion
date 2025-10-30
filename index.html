@@ -2378,6 +2378,11 @@
                 useGrouping: true
             });
         }
+        
+        function formatNumberForSheet(number) {
+            // Para guardar en Google Sheets: número puro con punto decimal
+            return Number(number).toFixed(2);
+        }
 
         // ========== FUNCIONES DEL EDITOR DE TEXTO ENRIQUECIDO ==========
         let currentFontSize = 3; // Tamaño base (1=10px, 2=13px, 3=16px, 4=18px, 5=24px, 6=32px, 7=48px)
@@ -3218,18 +3223,18 @@
                 email: invoiceData.cliente.email,
                 descripcion: invoiceData.factura.descripcionOperacion,
                 textoLibre: textoLibreMarkdown,
-                base: formatNumber(invoiceData.totales.subtotal),
-                iva: formatNumber(invoiceData.totales.iva),
-                total: formatNumber(invoiceData.totales.total),
+                base: formatNumberForSheet(invoiceData.totales.subtotal),
+                iva: formatNumberForSheet(invoiceData.totales.iva),
+                total: formatNumberForSheet(invoiceData.totales.total),
                 items: itemsDescription,
                 // Enviar también el detalle de cada línea
                 itemsDetail: invoiceData.items.map(item => ({
                     descripcion: item.descripcion,
-                    cantidad: formatNumber(item.cantidad),
-                    precio: formatNumber(item.precio),
-                    subtotal: formatNumber(item.subtotal),
-                    iva: formatNumber(item.subtotal * item.iva / 100),
-                    total: formatNumber(item.total)
+                    cantidad: formatNumberForSheet(item.cantidad),
+                    precio: formatNumberForSheet(item.precio),
+                    subtotal: formatNumberForSheet(item.subtotal),
+                    iva: formatNumberForSheet(item.subtotal * item.iva / 100),
+                    total: formatNumberForSheet(item.total)
                 }))
             };
             
@@ -3370,18 +3375,18 @@
                 email: invoiceData.cliente.email,
                 descripcion: invoiceData.factura.descripcionOperacion,
                 textoLibre: textoLibreMarkdown,
-                base: formatNumber(invoiceData.totales.subtotal),
-                iva: formatNumber(invoiceData.totales.iva),
-                total: formatNumber(invoiceData.totales.total),
+                base: formatNumberForSheet(invoiceData.totales.subtotal),
+                iva: formatNumberForSheet(invoiceData.totales.iva),
+                total: formatNumberForSheet(invoiceData.totales.total),
                 items: itemsDescription,
                 // Enviar también el detalle de cada línea
                 itemsDetail: invoiceData.items.map(item => ({
                     descripcion: item.descripcion,
-                    cantidad: formatNumber(item.cantidad),
-                    precio: formatNumber(item.precio),
-                    subtotal: formatNumber(item.subtotal),
-                    iva: formatNumber(item.subtotal * item.iva / 100),
-                    total: formatNumber(item.total)
+                    cantidad: formatNumberForSheet(item.cantidad),
+                    precio: formatNumberForSheet(item.precio),
+                    subtotal: formatNumberForSheet(item.subtotal),
+                    iva: formatNumberForSheet(item.subtotal * item.iva / 100),
+                    total: formatNumberForSheet(item.total)
                 }))
             };
             
