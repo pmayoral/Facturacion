@@ -224,6 +224,20 @@
             font-size: 14px;
             line-height: 1.6;
         }
+        
+        /* Estilos para texto libre en la factura */
+        #texto-libre-factura ul,
+        #texto-libre-factura ol {
+            margin: 0;
+            padding-left: 20px;
+            margin-bottom: 5px;
+        }
+        
+        #texto-libre-factura li {
+            margin: 0;
+            padding: 0;
+            line-height: 1.2;
+        }
 
         /* Sistema de Notificaciones */
         .notifications-container {
@@ -1042,7 +1056,7 @@
         .btn-edit:hover { background: #2980b9; }
         .btn-select { background: #27ae60; }
         .btn-select:hover { background: #229954; }
-        .btn-delete { background: #e74c3c; }
+        .btn-delete { background: #e74c3c; color: white; }
         .btn-delete:hover { background: #c0392b; }
         
         .filter-menu .filter-menu-header {
@@ -1341,6 +1355,7 @@
         .btn-delete {
             --color: #e74c3c;
             --hover: #c0392b;
+            color: white;
         }
 
         /* ========== EDITOR DE TEXTO ENRIQUECIDO ========== */
@@ -2013,17 +2028,39 @@
         function clearForm() {
             if (!confirm('¿Está seguro de que desea limpiar todo el formulario?')) return;
             
+            // Limpiar TODOS los inputs (cliente, factura, todo)
             document.querySelectorAll('input[type="text"]:not([readonly]), input[type="number"], input[type="email"]').forEach(input => {
-                if (!['factura-fecha', 'factura-serie'].includes(input.id)) input.value = '';
+                input.value = '';
             });
             
+            // Limpiar también textareas y selects
+            document.querySelectorAll('textarea, select').forEach(element => {
+                element.value = '';
+            });
+            
+            // Limpiar el editor de texto rico (Texto Libre)
+            const richTextEditor = document.getElementById('texto-libre');
+            if (richTextEditor) {
+                richTextEditor.innerHTML = '';
+            }
+            
+            // Limpiar el textarea oculto del texto libre
+            const textoLibreHidden = document.getElementById('texto-libre-hidden');
+            if (textoLibreHidden) {
+                textoLibreHidden.value = '';
+            }
+            
+            // Limpiar contenedor de items
             domCache.get('items-container').innerHTML = '';
+            
+            // Limpiar vista previa
             domCache.get('invoice-preview').innerHTML = `
                 <div style="text-align: center; color: #95a5a6; padding: 100px 0;">
                     <h3>Vista Previa de Factura</h3>
                     <p>Complete el formulario para ver la factura</p>
                 </div>
             `;
+            
             hidePrintButton();
             itemCount = 0;
         }
@@ -2516,12 +2553,7 @@
             if (!invoicesData || invoicesData.length === 0) return;
             
             // Debug: mostrar todas las columnas disponibles
-            if (invoicesData.length > 0) {
-                console.log('=== COLUMNAS DISPONIBLES EN GOOGLE SHEETS ===');
-                console.log(Object.keys(invoicesData[0]));
-                console.log('=== EJEMPLO PRIMERA FACTURA ===');
-                console.log(invoicesData[0]);
-            }
+            // Datos cargados correctamente
             
             // Extraer clientes únicos
             const clientesMap = new Map();
@@ -2542,12 +2574,7 @@
             
             clientesCache = Array.from(clientesMap.values());
             
-            // Debug: mostrar en consola los clientes cargados
-            console.log('=== CLIENTES EXTRAÍDOS ===');
-            console.log('Total clientes:', clientesCache.length);
-            if (clientesCache.length > 0) {
-                console.log('Ejemplo primer cliente:', clientesCache[0]);
-            }
+            // Clientes cargados en caché
         }
 
         function showAutocomplete(searchText) {
@@ -2687,8 +2714,6 @@
                 return;
             }
             
-            console.log('Seleccionando cliente:', cliente);
-            
             // Rellenar todos los campos del cliente
             const nombreInput = document.getElementById('cliente-nombre');
             const nifInput = document.getElementById('cliente-nif');
@@ -2705,16 +2730,6 @@
             if (cpInput) cpInput.value = cliente.cp || '';
             if (ciudadInput) ciudadInput.value = cliente.ciudad || '';
             if (provinciaInput) provinciaInput.value = cliente.provincia || '';
-            
-            console.log('Campos rellenados:', {
-                nombre: nombreInput?.value,
-                nif: nifInput?.value,
-                email: emailInput?.value,
-                direccion: direccionInput?.value,
-                cp: cpInput?.value,
-                ciudad: ciudadInput?.value,
-                provincia: provinciaInput?.value
-            });
             
             // Ocultar dropdown
             const dropdown = document.getElementById('cliente-autocomplete');
@@ -3109,48 +3124,132 @@
         function htmlToMarkdown(html) {
             if (!html) return '';
             
-            let markdown = html;
-            
-            // Tamaños de fuente (del más grande al más pequeño para evitar conflictos)
-            // Font size 7 y 6 → ## (muy grande)
-            markdown = markdown.replace(/<font[^>]*size=["']?[67]["']?[^>]*>(.*?)<\/font>/gi, '## $1');
-            // Font size 5 y 4 → # (grande)
-            markdown = markdown.replace(/<font[^>]*size=["']?[45]["']?[^>]*>(.*?)<\/font>/gi, '# $1');
-            // Font size 2 y 1 → ~ (pequeño)
-            markdown = markdown.replace(/<font[^>]*size=["']?1["']?[^>]*>(.*?)<\/font>/gi, '$1~~');
-            markdown = markdown.replace(/<font[^>]*size=["']?2["']?[^>]*>(.*?)<\/font>/gi, '$1~');
-            
-            // Negrita
-            markdown = markdown.replace(/<(strong|b)>(.*?)<\/(strong|b)>/gi, '**$2**');
-            
-            // Cursiva
-            markdown = markdown.replace(/<(em|i)>(.*?)<\/(em|i)>/gi, '*$2*');
-            
-            // Subrayado
-            markdown = markdown.replace(/<u>(.*?)<\/u>/gi, '__$1__');
-            
-            // Listas
-            markdown = markdown.replace(/<ul[^>]*>/gi, '');
-            markdown = markdown.replace(/<\/ul>/gi, '');
-            markdown = markdown.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n');
-            
-            // Saltos de línea
-            markdown = markdown.replace(/<br\s*\/?>/gi, '\n');
-            markdown = markdown.replace(/<\/div>/gi, '\n');
-            markdown = markdown.replace(/<div[^>]*>/gi, '');
-            
-            // Limpiar otros tags HTML restantes
-            markdown = markdown.replace(/<[^>]+>/g, '');
-            
-            // Decodificar entidades HTML
+            // Crear un elemento temporal
             const temp = document.createElement('div');
-            temp.innerHTML = markdown;
-            markdown = temp.textContent || temp.innerText || markdown;
+            temp.innerHTML = html;
             
-            // Limpiar líneas vacías múltiples
-            markdown = markdown.replace(/\n\s*\n\s*\n/g, '\n\n');
+            // Procesar el árbol DOM y aplicar marcadores solo una vez por bloque de texto
+            function processNode(node, inheritedFormats = {}) {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    return node.textContent;
+                }
+                
+                if (node.nodeType !== Node.ELEMENT_NODE) {
+                    return '';
+                }
+                
+                const tag = node.tagName.toLowerCase();
+                
+                // Clonar formatos heredados
+                const formats = { ...inheritedFormats };
+                
+                // Actualizar formatos según la etiqueta actual
+                switch (tag) {
+                    case 'strong':
+                    case 'b':
+                        formats.bold = true;
+                        break;
+                    case 'em':
+                    case 'i':
+                        formats.italic = true;
+                        break;
+                    case 'u':
+                        formats.underline = true;
+                        break;
+                    case 'font':
+                        const size = parseInt(node.getAttribute('size'));
+                        if (size) formats.fontSize = size;
+                        break;
+                    case 'br':
+                        return '\n';
+                    case 'div':
+                    case 'p':
+                        let divContent = '';
+                        for (let child of node.childNodes) {
+                            divContent += processNode(child, {});
+                        }
+                        // Añadir salto de línea al final del div/p solo si tiene contenido
+                        if (divContent.trim()) {
+                            return divContent.trimEnd() + '\n';
+                        }
+                        return '';
+                    case 'li':
+                        let liContent = '';
+                        for (let child of node.childNodes) {
+                            liContent += processNode(child, {});
+                        }
+                        return '- ' + liContent.trim() + '\n';
+                    case 'ul':
+                    case 'ol':
+                        let listContent = '';
+                        for (let child of node.childNodes) {
+                            listContent += processNode(child, {});
+                        }
+                        return listContent;
+                }
+                
+                // Procesar hijos y recopilar todo el texto
+                let childText = '';
+                for (let child of node.childNodes) {
+                    childText += processNode(child, formats);
+                }
+                
+                // Si no hay texto, no aplicar marcadores
+                if (!childText.trim()) {
+                    return childText;
+                }
+                
+                // Aplicar marcadores solo en el nivel más externo (cuando no están heredados)
+                let prefix = '';
+                let suffix = '';
+                
+                // Tamaño de fuente - solo aplicar si este nodo lo define
+                if (tag === 'font' && formats.fontSize) {
+                    if (formats.fontSize >= 6) {
+                        prefix = '## ';
+                    } else if (formats.fontSize >= 4) {
+                        prefix = '# ';
+                    } else if (formats.fontSize == 2) {
+                        suffix += '~';
+                    } else if (formats.fontSize == 1) {
+                        suffix += '~~';
+                    }
+                }
+                
+                // Negrita (solo si este nodo la activa)
+                if (tag === 'strong' || tag === 'b') {
+                    prefix += '**';
+                    suffix = '**' + suffix;
+                }
+                
+                // Cursiva (solo si este nodo la activa)
+                if (tag === 'em' || tag === 'i') {
+                    prefix += '*';
+                    suffix = '*' + suffix;
+                }
+                
+                // Subrayado (solo si este nodo la activa)
+                if (tag === 'u') {
+                    prefix += '__';
+                    suffix = '__' + suffix;
+                }
+                
+                return prefix + childText + suffix;
+            }
             
-            return markdown.trim();
+            let markdown = processNode(temp);
+            
+            // Limpiar líneas múltiples pero mantener dobles saltos (párrafos)
+            // Eliminar más de 2 saltos consecutivos
+            markdown = markdown.replace(/\n{3,}/g, '\n\n');
+            
+            // Eliminar espacios al final de cada línea
+            markdown = markdown.split('\n').map(line => line.trimEnd()).join('\n');
+            
+            // Trim general
+            markdown = markdown.trim();
+            
+            return markdown;
         }
         
         // Convertir Markdown a HTML para mostrar en el editor
@@ -3159,10 +3258,41 @@
             
             let html = markdown;
             
-            // Escapar HTML existente
-            html = html.replace(/&/g, '&amp;')
-                       .replace(/</g, '&lt;')
-                       .replace(/>/g, '&gt;');
+            // Separar en líneas para procesar listas correctamente
+            const lines = html.split('\n');
+            let result = [];
+            let inList = false;
+            let listItems = [];
+            
+            for (let line of lines) {
+                // Detectar elementos de lista
+                if (line.trim().startsWith('- ')) {
+                    if (!inList) {
+                        inList = true;
+                    }
+                    // Remover el "- " y procesar el contenido
+                    let content = line.trim().substring(2);
+                    listItems.push('<li>' + content + '</li>');
+                } else {
+                    if (inList) {
+                        // Cerrar lista sin saltos de línea entre elementos
+                        result.push('<ul>' + listItems.join('') + '</ul>');
+                        listItems = [];
+                        inList = false;
+                    }
+                    if (line.trim()) {
+                        result.push(line);
+                    } else {
+                        result.push(''); // Mantener líneas vacías
+                    }
+                }
+            }
+            
+            if (inList) {
+                result.push('<ul>' + listItems.join('') + '</ul>');
+            }
+            
+            html = result.join('\n');
             
             // Tamaños de fuente (procesar antes que negrita/cursiva)
             // ## texto → muy grande
@@ -3188,12 +3318,17 @@
             // __texto__ → subrayado
             html = html.replace(/__(.+?)__/g, '<u>$1</u>');
             
-            // - item → lista
-            html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
-            html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+            // Convertir saltos de línea a <br> de forma inteligente:
+            // 1. Primero proteger los saltos alrededor de listas
+            html = html.replace(/(<\/ul>|<\/ol>)\n/g, '$1|||NEWLINE|||');
+            html = html.replace(/\n(<ul>|<ol>)/g, '|||NEWLINE|||$1');
+            html = html.replace(/(<\/li>)\n/g, '$1');
             
-            // Saltos de línea
+            // 2. Convertir saltos normales a <br>
             html = html.replace(/\n/g, '<br>');
+            
+            // 3. Restaurar los saltos protegidos como simples saltos
+            html = html.replace(/\|\|\|NEWLINE\|\|\|/g, '\n');
             
             return html;
         }
@@ -3241,8 +3376,12 @@
             // ✅ LÓGICA EN HTML: Verificar si la factura ya existe Y si hay modificaciones
             try {
                 // Cargar todas las facturas para verificar si existe
-                const response = await fetch(WEB_APP_URL);
-                const allData = await response.json();
+                const readUrl = WEB_APP_URL + '?action=read';
+                const response = await fetch(readUrl);
+                const responseData = await response.json();
+                
+                // Extraer el array de datos (responseData.data según handleRead())
+                const allData = responseData.data || [];
                 
                 // Buscar filas con la misma SERIE + NÚMERO (columnas 1 y 2)
                 const existingRows = [];
@@ -3250,10 +3389,11 @@
                 
                 if (allData && Array.isArray(allData)) {
                     allData.forEach((row, index) => {
-                        // Comparar Serie (columna 1) Y Número (columna 2)
-                        if (index > 0 && row[1] == payload.serie && row[2] == payload.numero) {
+                        // Los datos vienen como objetos con propiedades, no como arrays
+                        const match = row['Serie'] == payload.serie && row['Número'] == payload.numero;
+                        if (match) {
                             existingRows.push({
-                                rowIndex: index + 1,
+                                rowIndex: row.rowNumber,
                                 data: row
                             });
                         }
@@ -3262,22 +3402,20 @@
                 
                 // Si existe, comparar datos para detectar cambios
                 if (existingRows.length > 0) {
-                    console.log('📋 Factura existente encontrada (Serie: ' + payload.serie + ', Nº: ' + payload.numero + '). Verificando si hay cambios...');
-                    
                     const existingFirstRow = existingRows[0].data;
                     
-                    // Comparar campos principales (usar == para comparación flexible de tipos)
-                    if (existingFirstRow[0] != payload.fecha ||
-                        existingFirstRow[1] != payload.serie ||
-                        existingFirstRow[3] != payload.nif ||
-                        existingFirstRow[4] != payload.cliente ||
-                        existingFirstRow[5] != payload.direccion ||
-                        existingFirstRow[6] != payload.cp ||
-                        existingFirstRow[7] != payload.ciudad ||
-                        existingFirstRow[8] != payload.provincia ||
-                        existingFirstRow[9] != payload.email ||
-                        existingFirstRow[10] != payload.descripcion ||
-                        existingFirstRow[11] != payload.textoLibre ||
+                    // Comparar campos principales (los datos vienen como objetos con propiedades)
+                    if (existingFirstRow['Fecha'] != payload.fecha ||
+                        existingFirstRow['Serie'] != payload.serie ||
+                        existingFirstRow['NIF'] != payload.nif ||
+                        existingFirstRow['Cliente'] != payload.cliente ||
+                        existingFirstRow['Dirección'] != payload.direccion ||
+                        existingFirstRow['CP'] != payload.cp ||
+                        existingFirstRow['Ciudad'] != payload.ciudad ||
+                        existingFirstRow['Provincia'] != payload.provincia ||
+                        existingFirstRow['Email'] != payload.email ||
+                        existingFirstRow['Descripción'] != payload.descripcion ||
+                        existingFirstRow['Texto Libre'] != payload.textoLibre ||
                         existingRows.length !== payload.itemsDetail.length) {
                         hasChanges = true;
                     } else {
@@ -3286,12 +3424,12 @@
                             const existingRow = existingRows[i].data;
                             const newItem = payload.itemsDetail[i];
                             
-                            if (existingRow[12] != newItem.descripcion ||
-                                existingRow[13] != newItem.cantidad ||
-                                existingRow[14] != newItem.precio ||
-                                existingRow[15] != newItem.subtotal ||
-                                existingRow[16] != newItem.iva ||
-                                existingRow[17] != newItem.total) {
+                            if (existingRow['Detalle'] != newItem.descripcion ||
+                                existingRow['Cantidad'] != newItem.cantidad ||
+                                existingRow['Precio'] != newItem.precio ||
+                                existingRow['Base Imponible'] != newItem.subtotal ||
+                                existingRow['IVA'] != newItem.iva ||
+                                existingRow['Total'] != newItem.total) {
                                 hasChanges = true;
                                 break;
                             }
@@ -3302,9 +3440,7 @@
                     if (hasChanges) {
                         payload.deleteRows = existingRows.map(r => r.rowIndex);
                         payload.isUpdate = true; // Marcar como actualización
-                        console.log('🔄 Cambios detectados. Se actualizarán ' + existingRows.length + ' filas.');
                     } else {
-                        console.log('✅ No hay cambios. No se actualizará nada.');
                         showNotification('✅ La factura ya existe sin cambios', 'info');
                         return; // No continuar con el guardado
                     }
@@ -3312,22 +3448,7 @@
                     payload.isUpdate = false; // Marcar como nueva
                 }
             } catch (error) {
-                console.log('⚠️ No se pudo verificar facturas existentes, se guardará como nueva:', error);
                 payload.isUpdate = false;
-            }
-            
-            // 🔍 DEBUG: Ver qué se envía
-            console.log('📤 Enviando al servidor:', {
-                serie: payload.serie,
-                numero: payload.numero,
-                isUpdate: payload.isUpdate,
-                deleteRows: payload.deleteRows,
-                textoLibre: payload.textoLibre ? payload.textoLibre.substring(0, 30) + '...' : '(vacío)',
-                itemsDetail: payload.itemsDetail ? payload.itemsDetail.length + ' items' : 'sin items'
-            });
-            
-            if (payload.deleteRows && payload.deleteRows.length > 0) {
-                console.log('⚠️ ATENCIÓN: Se envía solicitud de BORRADO de ' + payload.deleteRows.length + ' filas: ' + payload.deleteRows.join(', '));
             }
             
             // Enviar al Web App
@@ -3415,8 +3536,12 @@
             // ✅ LÓGICA EN HTML: Verificar si la factura ya existe Y si hay modificaciones
             try {
                 // Cargar todas las facturas para verificar si existe
-                const response = await fetch(WEB_APP_URL);
-                const allData = await response.json();
+                const readUrl = WEB_APP_URL + '?action=read';
+                const response = await fetch(readUrl);
+                const responseData = await response.json();
+                
+                // Extraer el array de datos (responseData.data según handleRead())
+                const allData = responseData.data || [];
                 
                 // Buscar filas con la misma SERIE + NÚMERO (columnas 1 y 2)
                 const existingRows = [];
@@ -3424,10 +3549,11 @@
                 
                 if (allData && Array.isArray(allData)) {
                     allData.forEach((row, index) => {
-                        // Comparar Serie (columna 1) Y Número (columna 2)
-                        if (index > 0 && row[1] == payload.serie && row[2] == payload.numero) {
+                        // Los datos vienen como objetos con propiedades, no como arrays
+                        const match = row['Serie'] == payload.serie && row['Número'] == payload.numero;
+                        if (match) {
                             existingRows.push({
-                                rowIndex: index + 1,
+                                rowIndex: row.rowNumber,
                                 data: row
                             });
                         }
@@ -3436,22 +3562,20 @@
                 
                 // Si existe, comparar datos para detectar cambios
                 if (existingRows.length > 0) {
-                    console.log('📋 Factura existente encontrada (Serie: ' + payload.serie + ', Nº: ' + payload.numero + '). Verificando si hay cambios...');
-                    
                     const existingFirstRow = existingRows[0].data;
                     
-                    // Comparar campos principales (usar == para comparación flexible de tipos)
-                    if (existingFirstRow[0] != payload.fecha ||
-                        existingFirstRow[1] != payload.serie ||
-                        existingFirstRow[3] != payload.nif ||
-                        existingFirstRow[4] != payload.cliente ||
-                        existingFirstRow[5] != payload.direccion ||
-                        existingFirstRow[6] != payload.cp ||
-                        existingFirstRow[7] != payload.ciudad ||
-                        existingFirstRow[8] != payload.provincia ||
-                        existingFirstRow[9] != payload.email ||
-                        existingFirstRow[10] != payload.descripcion ||
-                        existingFirstRow[11] != payload.textoLibre ||
+                    // Comparar campos principales (los datos vienen como objetos con propiedades)
+                    if (existingFirstRow['Fecha'] != payload.fecha ||
+                        existingFirstRow['Serie'] != payload.serie ||
+                        existingFirstRow['NIF'] != payload.nif ||
+                        existingFirstRow['Cliente'] != payload.cliente ||
+                        existingFirstRow['Dirección'] != payload.direccion ||
+                        existingFirstRow['CP'] != payload.cp ||
+                        existingFirstRow['Ciudad'] != payload.ciudad ||
+                        existingFirstRow['Provincia'] != payload.provincia ||
+                        existingFirstRow['Email'] != payload.email ||
+                        existingFirstRow['Descripción'] != payload.descripcion ||
+                        existingFirstRow['Texto Libre'] != payload.textoLibre ||
                         existingRows.length !== payload.itemsDetail.length) {
                         hasChanges = true;
                     } else {
@@ -3460,12 +3584,12 @@
                             const existingRow = existingRows[i].data;
                             const newItem = payload.itemsDetail[i];
                             
-                            if (existingRow[12] != newItem.descripcion ||
-                                existingRow[13] != newItem.cantidad ||
-                                existingRow[14] != newItem.precio ||
-                                existingRow[15] != newItem.subtotal ||
-                                existingRow[16] != newItem.iva ||
-                                existingRow[17] != newItem.total) {
+                            if (existingRow['Detalle'] != newItem.descripcion ||
+                                existingRow['Cantidad'] != newItem.cantidad ||
+                                existingRow['Precio'] != newItem.precio ||
+                                existingRow['Base Imponible'] != newItem.subtotal ||
+                                existingRow['IVA'] != newItem.iva ||
+                                existingRow['Total'] != newItem.total) {
                                 hasChanges = true;
                                 break;
                             }
@@ -3476,9 +3600,7 @@
                     if (hasChanges) {
                         payload.deleteRows = existingRows.map(r => r.rowIndex);
                         payload.isUpdate = true; // Marcar como actualización
-                        console.log('🔄 Cambios detectados. Se actualizarán ' + existingRows.length + ' filas.');
                     } else {
-                        console.log('✅ No hay cambios. No se actualizará nada.');
                         showNotification('✅ La factura ya existe sin cambios', 'info');
                         return; // No continuar con el guardado
                     }
@@ -3486,22 +3608,7 @@
                     payload.isUpdate = false; // Marcar como nueva
                 }
             } catch (error) {
-                console.log('⚠️ No se pudo verificar facturas existentes, se guardará como nueva:', error);
                 payload.isUpdate = false;
-            }
-            
-            // 🔍 DEBUG: Ver qué se envía
-            console.log('📤 Enviando al servidor (manual):', {
-                serie: payload.serie,
-                numero: payload.numero,
-                isUpdate: payload.isUpdate,
-                deleteRows: payload.deleteRows,
-                textoLibre: payload.textoLibre ? payload.textoLibre.substring(0, 30) + '...' : '(vacío)',
-                itemsDetail: payload.itemsDetail ? payload.itemsDetail.length + ' items' : 'sin items'
-            });
-            
-            if (payload.deleteRows && payload.deleteRows.length > 0) {
-                console.log('⚠️ ATENCIÓN: Se envía solicitud de BORRADO de ' + payload.deleteRows.length + ' filas: ' + payload.deleteRows.join(', '));
             }
             
             fetch(WEB_APP_URL, {
@@ -4625,8 +4732,15 @@
                 });
             }
             
-            // Actualizar la vista del grid para reflejar los cambios
-            renderGrid();
+            // NO recrear toda la tabla, solo actualizar checkboxes visualmente
+            document.querySelectorAll('#gridBody tr').forEach(tr => {
+                const rowNum = parseInt(tr.dataset.row);
+                const checkbox = tr.querySelector('input[type="checkbox"]');
+                if (checkbox) {
+                    checkbox.checked = selectedRows.has(rowNum);
+                }
+            });
+            
             updateSelectionInfo();
             updateSelectAllCheckbox();
         }
@@ -5574,7 +5688,50 @@
 
         // Actualizar grid
         function refreshGrid() {
-            loadInvoices();
+            // Ordenar datos por Serie (primero) y Fecha (segundo)
+            multiSortColumns = [
+                { column: 'Serie', direction: 'asc' },
+                { column: 'Fecha', direction: 'asc' }
+            ];
+            applyMultiSort();
+            
+            // Guardar orden en Google Sheets sin confirmación
+            saveSortToSheetsQuiet();
+        }
+        
+        // Guardar orden en Sheets sin confirmación (usado por refreshGrid)
+        function saveSortToSheetsQuiet() {
+            // Preparar datos para enviar
+            const sortedData = filteredData.map(invoice => {
+                const row = {};
+                headers.forEach(header => {
+                    row[header] = invoice[header] || '';
+                });
+                row.rowNumber = invoice.rowNumber;
+                return row;
+            });
+            
+            // Enviar al servidor
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'reorderRows',
+                    data: sortedData,
+                    headers: headers
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.result === 'success') {
+                    // Recargar datos para reflejar el nuevo orden
+                    loadInvoices();
+                } else {
+                    alert('Error al actualizar el orden en Google Sheets');
+                }
+            })
+            .catch(error => {
+                alert('Error al conectar con Google Sheets: ' + error.message);
+            });
         }
 
         // Cargar factura seleccionada
