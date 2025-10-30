@@ -2145,7 +2145,9 @@
             // Preguntar si desea guardar la factura (solo si no se especifica skipSavePrompt)
             if (!skipSavePrompt) {
                 setTimeout(() => {
-                    if (confirm('¿Desea guardar esta factura en Google Sheets?')) {
+                    const mensaje = '¿Desea guardar esta factura en Google Sheets?\n\n' +
+                                   '⚠️ Si ya existe (mismo Serie + Número), se actualizarán TODOS los datos.';
+                    if (confirm(mensaje)) {
                         saveInvoiceAutomatically(invoiceData);
                     }
                 }, 500); // Pequeño delay para que se vea primero la factura
@@ -3251,7 +3253,7 @@
                 if (data.result === 'success') {
                     // Factura guardada correctamente
                     // Notificación de éxito
-                    showNotification('Factura guardada correctamente en Google Sheets', 'success');
+                    showNotification('✅ Factura guardada/actualizada correctamente en Google Sheets', 'success');
                 } else {
                     throw new Error(data.error || 'Error al guardar');
                 }
@@ -3322,7 +3324,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.result === 'success') {
-                    showNotification('Factura guardada correctamente', 'success');
+                    showNotification('✅ Factura guardada/actualizada correctamente en Google Sheets', 'success');
                 } else {
                     throw new Error(data.error || 'Error desconocido');
                 }
