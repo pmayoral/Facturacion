@@ -3096,16 +3096,99 @@
         }
         
         // Guardar automáticamente (proceso invisible)
-        // Función para limpiar HTML y convertir a texto plano
-        function stripHtmlToPlainText(html) {
+        // ========== CONVERSIÓN HTML ↔ MARKDOWN ==========
+        
+        // Convertir HTML del editor a Markdown para guardar
+        function htmlToMarkdown(html) {
             if (!html) return '';
             
-            // Crear un elemento temporal
-            const temp = document.createElement('div');
-            temp.innerHTML = html;
+            let markdown = html;
             
-            // Obtener solo el texto (sin tags HTML)
-            return temp.textContent || temp.innerText || '';
+            // Tamaños de fuente (del más grande al más pequeño para evitar conflictos)
+            // Font size 7 y 6 → ## (muy grande)
+            markdown = markdown.replace(/<font[^>]*size=["']?[67]["']?[^>]*>(.*?)<\/font>/gi, '## $1');
+            // Font size 5 y 4 → # (grande)
+            markdown = markdown.replace(/<font[^>]*size=["']?[45]["']?[^>]*>(.*?)<\/font>/gi, '# $1');
+            // Font size 2 y 1 → ~ (pequeño)
+            markdown = markdown.replace(/<font[^>]*size=["']?1["']?[^>]*>(.*?)<\/font>/gi, '$1~~');
+            markdown = markdown.replace(/<font[^>]*size=["']?2["']?[^>]*>(.*?)<\/font>/gi, '$1~');
+            
+            // Negrita
+            markdown = markdown.replace(/<(strong|b)>(.*?)<\/(strong|b)>/gi, '**$2**');
+            
+            // Cursiva
+            markdown = markdown.replace(/<(em|i)>(.*?)<\/(em|i)>/gi, '*$2*');
+            
+            // Subrayado
+            markdown = markdown.replace(/<u>(.*?)<\/u>/gi, '__$1__');
+            
+            // Listas
+            markdown = markdown.replace(/<ul[^>]*>/gi, '');
+            markdown = markdown.replace(/<\/ul>/gi, '');
+            markdown = markdown.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n');
+            
+            // Saltos de línea
+            markdown = markdown.replace(/<br\s*\/?>/gi, '\n');
+            markdown = markdown.replace(/<\/div>/gi, '\n');
+            markdown = markdown.replace(/<div[^>]*>/gi, '');
+            
+            // Limpiar otros tags HTML restantes
+            markdown = markdown.replace(/<[^>]+>/g, '');
+            
+            // Decodificar entidades HTML
+            const temp = document.createElement('div');
+            temp.innerHTML = markdown;
+            markdown = temp.textContent || temp.innerText || markdown;
+            
+            // Limpiar líneas vacías múltiples
+            markdown = markdown.replace(/\n\s*\n\s*\n/g, '\n\n');
+            
+            return markdown.trim();
+        }
+        
+        // Convertir Markdown a HTML para mostrar en el editor
+        function markdownToHtml(markdown) {
+            if (!markdown) return '';
+            
+            let html = markdown;
+            
+            // Escapar HTML existente
+            html = html.replace(/&/g, '&amp;')
+                       .replace(/</g, '&lt;')
+                       .replace(/>/g, '&gt;');
+            
+            // Tamaños de fuente (procesar antes que negrita/cursiva)
+            // ## texto → muy grande
+            html = html.replace(/^## (.+)$/gm, '<font size="6">$1</font>');
+            html = html.replace(/## (.+?)(?=\n|$)/g, '<font size="6">$1</font>');
+            
+            // # texto → grande
+            html = html.replace(/^# (.+)$/gm, '<font size="5">$1</font>');
+            html = html.replace(/# (.+?)(?=\n|$)/g, '<font size="5">$1</font>');
+            
+            // texto~~ → muy pequeño
+            html = html.replace(/(.+?)~~/g, '<font size="1">$1</font>');
+            
+            // texto~ → pequeño
+            html = html.replace(/(.+?)~/g, '<font size="2">$1</font>');
+            
+            // **texto** → negrita
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            
+            // *texto* → cursiva (pero no ** ya procesado)
+            html = html.replace(/(?<!\*)\*([^\*]+?)\*(?!\*)/g, '<em>$1</em>');
+            
+            // __texto__ → subrayado
+            html = html.replace(/__(.+?)__/g, '<u>$1</u>');
+            
+            // - item → lista
+            html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+            html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+            
+            // Saltos de línea
+            html = html.replace(/\n/g, '<br>');
+            
+            return html;
         }
 
         function saveInvoiceAutomatically(invoiceData) {
@@ -3116,8 +3199,8 @@
             
             const fechaData = processFechaHora(invoiceData.factura.fecha);
             
-            // Limpiar el texto libre de HTML para guardar como texto plano
-            const textoLibrePlano = stripHtmlToPlainText(invoiceData.factura.textoLibre);
+            // Convertir texto libre de HTML a Markdown
+            const textoLibreMarkdown = htmlToMarkdown(invoiceData.factura.textoLibre);
             
             // Datos a enviar con el nuevo formato
             const payload = {
@@ -3132,7 +3215,7 @@
                 provincia: invoiceData.cliente.provincia,
                 email: invoiceData.cliente.email,
                 descripcion: invoiceData.factura.descripcionOperacion,
-                textoLibre: textoLibrePlano,
+                textoLibre: textoLibreMarkdown,
                 base: formatNumber(invoiceData.totales.subtotal),
                 iva: formatNumber(invoiceData.totales.iva),
                 total: formatNumber(invoiceData.totales.total),
@@ -3197,8 +3280,8 @@
             
             const fechaData = processFechaHora(invoiceData.factura.fecha);
             
-            // Limpiar el texto libre de HTML
-            const textoLibrePlano = stripHtmlToPlainText(invoiceData.factura.textoLibre);
+            // Convertir texto libre de HTML a Markdown
+            const textoLibreMarkdown = htmlToMarkdown(invoiceData.factura.textoLibre);
             
             // Datos a enviar con el mismo formato que saveInvoiceAutomatically
             const payload = {
@@ -3213,7 +3296,7 @@
                 provincia: invoiceData.cliente.provincia,
                 email: invoiceData.cliente.email,
                 descripcion: invoiceData.factura.descripcionOperacion,
-                textoLibre: textoLibrePlano,
+                textoLibre: textoLibreMarkdown,
                 base: formatNumber(invoiceData.totales.subtotal),
                 iva: formatNumber(invoiceData.totales.iva),
                 total: formatNumber(invoiceData.totales.total),
@@ -5662,7 +5745,9 @@
             document.getElementById('factura-fecha').value = formatInvoiceDate(invoice['Fecha']);
             
             document.getElementById('operacion-descripcion').value = invoice['Descripción'] || '';
-            document.getElementById('texto-libre').innerHTML = invoice['Texto Libre'] || '';
+            // Convertir Markdown a HTML para el editor
+            const textoLibreMarkdown = invoice['Texto Libre'] || '';
+            document.getElementById('texto-libre').innerHTML = markdownToHtml(textoLibreMarkdown);
             
             // Cargar detalle si existe
             if (invoice['Detalle']) {
@@ -5698,7 +5783,9 @@
             document.getElementById('factura-numero').value = firstLine['Número'] || '';
             document.getElementById('factura-fecha').value = formatInvoiceDate(firstLine['Fecha']);
             document.getElementById('operacion-descripcion').value = firstLine['Descripción'] || '';
-            document.getElementById('texto-libre').innerHTML = firstLine['Texto Libre'] || '';
+            // Convertir Markdown a HTML para el editor
+            const textoLibreMarkdown = firstLine['Texto Libre'] || '';
+            document.getElementById('texto-libre').innerHTML = markdownToHtml(textoLibreMarkdown);
             
             // Cargar cada línea como un concepto separado
             invoiceLines.forEach((line, index) => {
@@ -6601,7 +6688,7 @@
 
 <!--
 ═══════════════════════════════════════════════════════════════════════════════
-INSTRUCCIONES PARA GOOGLE APPS SCRIPT
+
 ═══════════════════════════════════════════════════════════════════════════════
 
 Añade esta línea en Google Apps Script (hay 2 lugares):
