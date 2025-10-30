@@ -3250,7 +3250,8 @@
                 
                 if (allData && Array.isArray(allData)) {
                     allData.forEach((row, index) => {
-                        if (index > 0 && row[2] === payload.numero) {
+                        // Usar == para comparar (flexible con tipos: string vs number)
+                        if (index > 0 && row[2] == payload.numero) {
                             existingRows.push({
                                 rowIndex: index + 1,
                                 data: row
@@ -3265,18 +3266,18 @@
                     
                     const existingFirstRow = existingRows[0].data;
                     
-                    // Comparar campos principales (columnas: 0=Fecha, 1=Serie, 3=NIF, 4=Cliente, etc.)
-                    if (existingFirstRow[0] !== payload.fecha ||
-                        existingFirstRow[1] !== payload.serie ||
-                        existingFirstRow[3] !== payload.nif ||
-                        existingFirstRow[4] !== payload.cliente ||
-                        existingFirstRow[5] !== payload.direccion ||
-                        existingFirstRow[6] !== payload.cp ||
-                        existingFirstRow[7] !== payload.ciudad ||
-                        existingFirstRow[8] !== payload.provincia ||
-                        existingFirstRow[9] !== payload.email ||
-                        existingFirstRow[10] !== payload.descripcion ||
-                        existingFirstRow[11] !== payload.textoLibre ||
+                    // Comparar campos principales (usar == para comparación flexible de tipos)
+                    if (existingFirstRow[0] != payload.fecha ||
+                        existingFirstRow[1] != payload.serie ||
+                        existingFirstRow[3] != payload.nif ||
+                        existingFirstRow[4] != payload.cliente ||
+                        existingFirstRow[5] != payload.direccion ||
+                        existingFirstRow[6] != payload.cp ||
+                        existingFirstRow[7] != payload.ciudad ||
+                        existingFirstRow[8] != payload.provincia ||
+                        existingFirstRow[9] != payload.email ||
+                        existingFirstRow[10] != payload.descripcion ||
+                        existingFirstRow[11] != payload.textoLibre ||
                         existingRows.length !== payload.itemsDetail.length) {
                         hasChanges = true;
                     } else {
@@ -3285,12 +3286,12 @@
                             const existingRow = existingRows[i].data;
                             const newItem = payload.itemsDetail[i];
                             
-                            if (existingRow[12] !== newItem.descripcion ||
-                                existingRow[13] !== newItem.cantidad ||
-                                existingRow[14] !== newItem.precio ||
-                                existingRow[15] !== newItem.subtotal ||
-                                existingRow[16] !== newItem.iva ||
-                                existingRow[17] !== newItem.total) {
+                            if (existingRow[12] != newItem.descripcion ||
+                                existingRow[13] != newItem.cantidad ||
+                                existingRow[14] != newItem.precio ||
+                                existingRow[15] != newItem.subtotal ||
+                                existingRow[16] != newItem.iva ||
+                                existingRow[17] != newItem.total) {
                                 hasChanges = true;
                                 break;
                             }
@@ -3418,7 +3419,8 @@
                 
                 if (allData && Array.isArray(allData)) {
                     allData.forEach((row, index) => {
-                        if (index > 0 && row[2] === payload.numero) {
+                        // Usar == para comparar (flexible con tipos: string vs number)
+                        if (index > 0 && row[2] == payload.numero) {
                             existingRows.push({
                                 rowIndex: index + 1,
                                 data: row
@@ -3433,18 +3435,18 @@
                     
                     const existingFirstRow = existingRows[0].data;
                     
-                    // Comparar campos principales (columnas: 0=Fecha, 1=Serie, 3=NIF, 4=Cliente, etc.)
-                    if (existingFirstRow[0] !== payload.fecha ||
-                        existingFirstRow[1] !== payload.serie ||
-                        existingFirstRow[3] !== payload.nif ||
-                        existingFirstRow[4] !== payload.cliente ||
-                        existingFirstRow[5] !== payload.direccion ||
-                        existingFirstRow[6] !== payload.cp ||
-                        existingFirstRow[7] !== payload.ciudad ||
-                        existingFirstRow[8] !== payload.provincia ||
-                        existingFirstRow[9] !== payload.email ||
-                        existingFirstRow[10] !== payload.descripcion ||
-                        existingFirstRow[11] !== payload.textoLibre ||
+                    // Comparar campos principales (usar == para comparación flexible de tipos)
+                    if (existingFirstRow[0] != payload.fecha ||
+                        existingFirstRow[1] != payload.serie ||
+                        existingFirstRow[3] != payload.nif ||
+                        existingFirstRow[4] != payload.cliente ||
+                        existingFirstRow[5] != payload.direccion ||
+                        existingFirstRow[6] != payload.cp ||
+                        existingFirstRow[7] != payload.ciudad ||
+                        existingFirstRow[8] != payload.provincia ||
+                        existingFirstRow[9] != payload.email ||
+                        existingFirstRow[10] != payload.descripcion ||
+                        existingFirstRow[11] != payload.textoLibre ||
                         existingRows.length !== payload.itemsDetail.length) {
                         hasChanges = true;
                     } else {
@@ -3453,12 +3455,12 @@
                             const existingRow = existingRows[i].data;
                             const newItem = payload.itemsDetail[i];
                             
-                            if (existingRow[12] !== newItem.descripcion ||
-                                existingRow[13] !== newItem.cantidad ||
-                                existingRow[14] !== newItem.precio ||
-                                existingRow[15] !== newItem.subtotal ||
-                                existingRow[16] !== newItem.iva ||
-                                existingRow[17] !== newItem.total) {
+                            if (existingRow[12] != newItem.descripcion ||
+                                existingRow[13] != newItem.cantidad ||
+                                existingRow[14] != newItem.precio ||
+                                existingRow[15] != newItem.subtotal ||
+                                existingRow[16] != newItem.iva ||
+                                existingRow[17] != newItem.total) {
                                 hasChanges = true;
                                 break;
                             }
