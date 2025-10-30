@@ -2146,7 +2146,7 @@
             if (!skipSavePrompt) {
                 setTimeout(() => {
                     const mensaje = '¿Desea guardar esta factura en Google Sheets?\n\n' +
-                                   '⚠️ Si ya existe (mismo Número), solo se actualizará si hay modificaciones.';
+                                   '⚠️ Si ya existe (misma Serie + Número), solo se actualizará si hay modificaciones.';
                     if (confirm(mensaje)) {
                         saveInvoiceAutomatically(invoiceData);
                     }
@@ -3244,14 +3244,14 @@
                 const response = await fetch(WEB_APP_URL);
                 const allData = await response.json();
                 
-                // Buscar filas con el mismo NÚMERO de factura (columna 2)
+                // Buscar filas con la misma SERIE + NÚMERO (columnas 1 y 2)
                 const existingRows = [];
                 let hasChanges = false;
                 
                 if (allData && Array.isArray(allData)) {
                     allData.forEach((row, index) => {
-                        // Usar == para comparar (flexible con tipos: string vs number)
-                        if (index > 0 && row[2] == payload.numero) {
+                        // Comparar Serie (columna 1) Y Número (columna 2)
+                        if (index > 0 && row[1] == payload.serie && row[2] == payload.numero) {
                             existingRows.push({
                                 rowIndex: index + 1,
                                 data: row
@@ -3262,7 +3262,7 @@
                 
                 // Si existe, comparar datos para detectar cambios
                 if (existingRows.length > 0) {
-                    console.log('📋 Factura existente encontrada (Nº ' + payload.numero + '). Verificando si hay cambios...');
+                    console.log('📋 Factura existente encontrada (Serie: ' + payload.serie + ', Nº: ' + payload.numero + '). Verificando si hay cambios...');
                     
                     const existingFirstRow = existingRows[0].data;
                     
@@ -3318,12 +3318,17 @@
             
             // 🔍 DEBUG: Ver qué se envía
             console.log('📤 Enviando al servidor:', {
+                serie: payload.serie,
                 numero: payload.numero,
                 isUpdate: payload.isUpdate,
                 deleteRows: payload.deleteRows,
                 textoLibre: payload.textoLibre ? payload.textoLibre.substring(0, 30) + '...' : '(vacío)',
                 itemsDetail: payload.itemsDetail ? payload.itemsDetail.length + ' items' : 'sin items'
             });
+            
+            if (payload.deleteRows && payload.deleteRows.length > 0) {
+                console.log('⚠️ ATENCIÓN: Se envía solicitud de BORRADO de ' + payload.deleteRows.length + ' filas: ' + payload.deleteRows.join(', '));
+            }
             
             // Enviar al Web App
             fetch(WEB_APP_URL, {
@@ -3413,14 +3418,14 @@
                 const response = await fetch(WEB_APP_URL);
                 const allData = await response.json();
                 
-                // Buscar filas con el mismo NÚMERO de factura (columna 2)
+                // Buscar filas con la misma SERIE + NÚMERO (columnas 1 y 2)
                 const existingRows = [];
                 let hasChanges = false;
                 
                 if (allData && Array.isArray(allData)) {
                     allData.forEach((row, index) => {
-                        // Usar == para comparar (flexible con tipos: string vs number)
-                        if (index > 0 && row[2] == payload.numero) {
+                        // Comparar Serie (columna 1) Y Número (columna 2)
+                        if (index > 0 && row[1] == payload.serie && row[2] == payload.numero) {
                             existingRows.push({
                                 rowIndex: index + 1,
                                 data: row
@@ -3431,7 +3436,7 @@
                 
                 // Si existe, comparar datos para detectar cambios
                 if (existingRows.length > 0) {
-                    console.log('📋 Factura existente encontrada (Nº ' + payload.numero + '). Verificando si hay cambios...');
+                    console.log('📋 Factura existente encontrada (Serie: ' + payload.serie + ', Nº: ' + payload.numero + '). Verificando si hay cambios...');
                     
                     const existingFirstRow = existingRows[0].data;
                     
@@ -3487,12 +3492,17 @@
             
             // 🔍 DEBUG: Ver qué se envía
             console.log('📤 Enviando al servidor (manual):', {
+                serie: payload.serie,
                 numero: payload.numero,
                 isUpdate: payload.isUpdate,
                 deleteRows: payload.deleteRows,
                 textoLibre: payload.textoLibre ? payload.textoLibre.substring(0, 30) + '...' : '(vacío)',
                 itemsDetail: payload.itemsDetail ? payload.itemsDetail.length + ' items' : 'sin items'
             });
+            
+            if (payload.deleteRows && payload.deleteRows.length > 0) {
+                console.log('⚠️ ATENCIÓN: Se envía solicitud de BORRADO de ' + payload.deleteRows.length + ' filas: ' + payload.deleteRows.join(', '));
+            }
             
             fetch(WEB_APP_URL, {
                 method: 'POST',
