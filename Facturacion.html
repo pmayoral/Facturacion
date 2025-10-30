@@ -2146,7 +2146,7 @@
             if (!skipSavePrompt) {
                 setTimeout(() => {
                     const mensaje = '¿Desea guardar esta factura en Google Sheets?\n\n' +
-                                   '⚠️ Si ya existe (mismo Serie + Número), se actualizarán TODOS los datos.';
+                                   '⚠️ Si ya existe (mismo Número), solo se actualizará si hay modificaciones.';
                     if (confirm(mensaje)) {
                         saveInvoiceAutomatically(invoiceData);
                     }
@@ -3233,28 +3233,74 @@
                 }))
             };
             
-            // ✅ LÓGICA EN HTML: Verificar si la factura ya existe
+            // ✅ LÓGICA EN HTML: Verificar si la factura ya existe Y si hay modificaciones
             try {
                 // Cargar todas las facturas para verificar si existe
                 const response = await fetch(WEB_APP_URL);
                 const allData = await response.json();
                 
-                // Buscar filas con el mismo Serie + Número
-                const rowsToDelete = [];
+                // Buscar filas con el mismo NÚMERO de factura (columna 2)
+                const existingRows = [];
+                let hasChanges = false;
+                
                 if (allData && Array.isArray(allData)) {
                     allData.forEach((row, index) => {
-                        // index 0 es el header, los datos empiezan en index 1
-                        // Las filas en Google Sheets empiezan en 1, y el header está en 1, así que datos en fila 2+
-                        if (index > 0 && row[1] === payload.serie && row[2] === payload.numero) {
-                            rowsToDelete.push(index + 1); // +1 porque las filas de Sheets empiezan en 1
+                        if (index > 0 && row[2] === payload.numero) {
+                            existingRows.push({
+                                rowIndex: index + 1,
+                                data: row
+                            });
                         }
                     });
                 }
                 
-                // Si hay filas que eliminar, añadir la información al payload
-                if (rowsToDelete.length > 0) {
-                    payload.deleteRows = rowsToDelete;
-                    console.log('🔄 Factura existente detectada. Se actualizarán ' + rowsToDelete.length + ' filas.');
+                // Si existe, comparar datos para detectar cambios
+                if (existingRows.length > 0) {
+                    console.log('📋 Factura existente encontrada (Nº ' + payload.numero + '). Verificando si hay cambios...');
+                    
+                    const existingFirstRow = existingRows[0].data;
+                    
+                    // Comparar campos principales (columnas: 0=Fecha, 1=Serie, 3=NIF, 4=Cliente, etc.)
+                    if (existingFirstRow[0] !== payload.fecha ||
+                        existingFirstRow[1] !== payload.serie ||
+                        existingFirstRow[3] !== payload.nif ||
+                        existingFirstRow[4] !== payload.cliente ||
+                        existingFirstRow[5] !== payload.direccion ||
+                        existingFirstRow[6] !== payload.cp ||
+                        existingFirstRow[7] !== payload.ciudad ||
+                        existingFirstRow[8] !== payload.provincia ||
+                        existingFirstRow[9] !== payload.email ||
+                        existingFirstRow[10] !== payload.descripcion ||
+                        existingFirstRow[11] !== payload.textoLibre ||
+                        existingRows.length !== payload.itemsDetail.length) {
+                        hasChanges = true;
+                    } else {
+                        // Comparar items detallados
+                        for (let i = 0; i < existingRows.length; i++) {
+                            const existingRow = existingRows[i].data;
+                            const newItem = payload.itemsDetail[i];
+                            
+                            if (existingRow[12] !== newItem.descripcion ||
+                                existingRow[13] !== newItem.cantidad ||
+                                existingRow[14] !== newItem.precio ||
+                                existingRow[15] !== newItem.subtotal ||
+                                existingRow[16] !== newItem.iva ||
+                                existingRow[17] !== newItem.total) {
+                                hasChanges = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Solo enviar deleteRows si hay cambios
+                    if (hasChanges) {
+                        payload.deleteRows = existingRows.map(r => r.rowIndex);
+                        console.log('🔄 Cambios detectados. Se actualizarán ' + existingRows.length + ' filas.');
+                    } else {
+                        console.log('✅ No hay cambios. No se actualizará nada.');
+                        showNotification('✅ La factura ya existe sin cambios', 'info');
+                        return; // No continuar con el guardado
+                    }
                 }
             } catch (error) {
                 console.log('⚠️ No se pudo verificar facturas existentes, se guardará como nueva:', error);
@@ -3339,28 +3385,74 @@
                 }))
             };
             
-            // ✅ LÓGICA EN HTML: Verificar si la factura ya existe
+            // ✅ LÓGICA EN HTML: Verificar si la factura ya existe Y si hay modificaciones
             try {
                 // Cargar todas las facturas para verificar si existe
                 const response = await fetch(WEB_APP_URL);
                 const allData = await response.json();
                 
-                // Buscar filas con el mismo Serie + Número
-                const rowsToDelete = [];
+                // Buscar filas con el mismo NÚMERO de factura (columna 2)
+                const existingRows = [];
+                let hasChanges = false;
+                
                 if (allData && Array.isArray(allData)) {
                     allData.forEach((row, index) => {
-                        // index 0 es el header, los datos empiezan en index 1
-                        // Las filas en Google Sheets empiezan en 1, y el header está en 1, así que datos en fila 2+
-                        if (index > 0 && row[1] === payload.serie && row[2] === payload.numero) {
-                            rowsToDelete.push(index + 1); // +1 porque las filas de Sheets empiezan en 1
+                        if (index > 0 && row[2] === payload.numero) {
+                            existingRows.push({
+                                rowIndex: index + 1,
+                                data: row
+                            });
                         }
                     });
                 }
                 
-                // Si hay filas que eliminar, añadir la información al payload
-                if (rowsToDelete.length > 0) {
-                    payload.deleteRows = rowsToDelete;
-                    console.log('🔄 Factura existente detectada. Se actualizarán ' + rowsToDelete.length + ' filas.');
+                // Si existe, comparar datos para detectar cambios
+                if (existingRows.length > 0) {
+                    console.log('📋 Factura existente encontrada (Nº ' + payload.numero + '). Verificando si hay cambios...');
+                    
+                    const existingFirstRow = existingRows[0].data;
+                    
+                    // Comparar campos principales (columnas: 0=Fecha, 1=Serie, 3=NIF, 4=Cliente, etc.)
+                    if (existingFirstRow[0] !== payload.fecha ||
+                        existingFirstRow[1] !== payload.serie ||
+                        existingFirstRow[3] !== payload.nif ||
+                        existingFirstRow[4] !== payload.cliente ||
+                        existingFirstRow[5] !== payload.direccion ||
+                        existingFirstRow[6] !== payload.cp ||
+                        existingFirstRow[7] !== payload.ciudad ||
+                        existingFirstRow[8] !== payload.provincia ||
+                        existingFirstRow[9] !== payload.email ||
+                        existingFirstRow[10] !== payload.descripcion ||
+                        existingFirstRow[11] !== payload.textoLibre ||
+                        existingRows.length !== payload.itemsDetail.length) {
+                        hasChanges = true;
+                    } else {
+                        // Comparar items detallados
+                        for (let i = 0; i < existingRows.length; i++) {
+                            const existingRow = existingRows[i].data;
+                            const newItem = payload.itemsDetail[i];
+                            
+                            if (existingRow[12] !== newItem.descripcion ||
+                                existingRow[13] !== newItem.cantidad ||
+                                existingRow[14] !== newItem.precio ||
+                                existingRow[15] !== newItem.subtotal ||
+                                existingRow[16] !== newItem.iva ||
+                                existingRow[17] !== newItem.total) {
+                                hasChanges = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Solo enviar deleteRows si hay cambios
+                    if (hasChanges) {
+                        payload.deleteRows = existingRows.map(r => r.rowIndex);
+                        console.log('🔄 Cambios detectados. Se actualizarán ' + existingRows.length + ' filas.');
+                    } else {
+                        console.log('✅ No hay cambios. No se actualizará nada.');
+                        showNotification('✅ La factura ya existe sin cambios', 'info');
+                        return; // No continuar con el guardado
+                    }
                 }
             } catch (error) {
                 console.log('⚠️ No se pudo verificar facturas existentes, se guardará como nueva:', error);
