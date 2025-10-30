@@ -36,29 +36,6 @@ function doPost(e) {
       return handleReorderRows(data);
     }
     
-    // 🔍 DEBUG COMPLETO: Ver qué llega del HTML
-    console.log('==================== DEBUG INICIO ====================');
-    console.log('📦 Datos recibidos del HTML:');
-    console.log('  fecha: ' + data.fecha);
-    console.log('  serie: ' + data.serie);
-    console.log('  numero: ' + data.numero);
-    console.log('  nif: ' + data.nif);
-    console.log('  cliente: ' + data.cliente);
-    console.log('  direccion: ' + data.direccion);
-    console.log('  cp: ' + data.cp);
-    console.log('  ciudad: ' + data.ciudad);
-    console.log('  provincia: ' + data.provincia);
-    console.log('  email: ' + data.email);
-    console.log('  descripcion: ' + data.descripcion);
-    console.log('  textoLibre: ' + (data.textoLibre ? data.textoLibre.substring(0, 50) + '...' : '(vacío)'));
-    console.log('  itemsDetail.length: ' + (data.itemsDetail ? data.itemsDetail.length : 0));
-    if (data.itemsDetail && data.itemsDetail.length > 0) {
-      console.log('  Primer item:');
-      console.log('    - descripcion: ' + data.itemsDetail[0].descripcion);
-      console.log('    - cantidad: ' + data.itemsDetail[0].cantidad);
-      console.log('    - precio: ' + data.itemsDetail[0].precio);
-    }
-    console.log('==================== DEBUG FIN ====================');
     
     // ✅ EJECUTAR INSTRUCCIONES DEL HTML: Si el HTML indica que hay filas que eliminar, ejecutar
     // El HTML ya ha verificado que la factura existe (por número) y que hay modificaciones
@@ -97,11 +74,6 @@ function doPost(e) {
           item.total || ''            // Columna R: Total
         ];
         
-        console.log('🔍 DEBUG - Insertando fila ' + (index + 1) + ':');
-        console.log('  Texto Libre (L): ' + (data.textoLibre || '(vacío)'));
-        console.log('  Detalle (M): ' + (item.descripcion || '(vacío)'));
-        console.log('  Cantidad (N): ' + (item.cantidad || '(vacío)'));
-        console.log('  Precio (O): ' + (item.precio || '(vacío)'));
         
         sheet.appendRow(row);
       });
@@ -127,10 +99,6 @@ function doPost(e) {
         data.iva || '',             // Columna Q: IVA
         data.total || ''            // Columna R: Total
       ];
-      
-      console.log('🔍 DEBUG - Insertando fila (modo clásico):');
-      console.log('  Texto Libre (L): ' + (data.textoLibre || '(vacío)'));
-      console.log('  Detalle (M): ' + (data.items || '(vacío)'));
       
       sheet.appendRow(row);
     }
