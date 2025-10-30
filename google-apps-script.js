@@ -36,26 +36,14 @@ function doPost(e) {
       return handleReorderRows(data);
     }
     
-    // Buscar si ya existe una factura con el mismo Serie + Número
-    const allData = sheet.getDataRange().getValues();
-    const headers = allData[0];
-    const serieCol = headers.indexOf('Serie');
-    const numeroCol = headers.indexOf('Número');
-    
-    let existingRows = [];
-    for (let i = 1; i < allData.length; i++) {
-      if (allData[i][serieCol] === data.serie && allData[i][numeroCol] === data.numero) {
-        existingRows.push(i + 1); // +1 porque las filas empiezan en 1
-      }
-    }
-    
-    // Si existe, eliminar las filas antiguas
-    if (existingRows.length > 0) {
-      console.log('Factura existente encontrada. Eliminando ' + existingRows.length + ' filas antiguas...');
+    // ✅ EJECUTAR INSTRUCCIONES DEL HTML: Si el HTML indica que hay filas que eliminar, ejecutar
+    if (data.deleteRows && Array.isArray(data.deleteRows) && data.deleteRows.length > 0) {
+      console.log('📋 HTML solicita eliminar ' + data.deleteRows.length + ' filas antiguas...');
       // Eliminar de mayor a menor para no desplazar índices
-      for (let i = existingRows.length - 1; i >= 0; i--) {
-        sheet.deleteRow(existingRows[i]);
+      for (let i = data.deleteRows.length - 1; i >= 0; i--) {
+        sheet.deleteRow(data.deleteRows[i]);
       }
+      console.log('✅ Filas eliminadas correctamente');
     }
     
     // Si hay items detallados, crear una fila por cada item

@@ -3193,7 +3193,7 @@
             return html;
         }
 
-        function saveInvoiceAutomatically(invoiceData) {
+        async function saveInvoiceAutomatically(invoiceData) {
             // Preparar datos para insertar
             const itemsDescription = invoiceData.items.map(item => 
                 `${item.descripcion} (${formatNumber(item.cantidad)}x${formatNumber(item.precio)}€)`
@@ -3233,7 +3233,32 @@
                 }))
             };
             
-            
+            // ✅ LÓGICA EN HTML: Verificar si la factura ya existe
+            try {
+                // Cargar todas las facturas para verificar si existe
+                const response = await fetch(WEB_APP_URL);
+                const allData = await response.json();
+                
+                // Buscar filas con el mismo Serie + Número
+                const rowsToDelete = [];
+                if (allData && Array.isArray(allData)) {
+                    allData.forEach((row, index) => {
+                        // index 0 es el header, los datos empiezan en index 1
+                        // Las filas en Google Sheets empiezan en 1, y el header está en 1, así que datos en fila 2+
+                        if (index > 0 && row[1] === payload.serie && row[2] === payload.numero) {
+                            rowsToDelete.push(index + 1); // +1 porque las filas de Sheets empiezan en 1
+                        }
+                    });
+                }
+                
+                // Si hay filas que eliminar, añadir la información al payload
+                if (rowsToDelete.length > 0) {
+                    payload.deleteRows = rowsToDelete;
+                    console.log('🔄 Factura existente detectada. Se actualizarán ' + rowsToDelete.length + ' filas.');
+                }
+            } catch (error) {
+                console.log('⚠️ No se pudo verificar facturas existentes, se guardará como nueva:', error);
+            }
             
             // Enviar al Web App
             fetch(WEB_APP_URL, {
@@ -3266,7 +3291,7 @@
         }
         
         // Guardar manualmente cuando el usuario lo solicite
-        function saveToGoogleSheetsWebApp() {
+        async function saveToGoogleSheetsWebApp() {
             if (!validateForm()) {
                 showNotification('Por favor, complete todos los campos obligatorios antes de guardar', 'error');
                 return;
@@ -3313,6 +3338,33 @@
                     total: formatNumber(item.total)
                 }))
             };
+            
+            // ✅ LÓGICA EN HTML: Verificar si la factura ya existe
+            try {
+                // Cargar todas las facturas para verificar si existe
+                const response = await fetch(WEB_APP_URL);
+                const allData = await response.json();
+                
+                // Buscar filas con el mismo Serie + Número
+                const rowsToDelete = [];
+                if (allData && Array.isArray(allData)) {
+                    allData.forEach((row, index) => {
+                        // index 0 es el header, los datos empiezan en index 1
+                        // Las filas en Google Sheets empiezan en 1, y el header está en 1, así que datos en fila 2+
+                        if (index > 0 && row[1] === payload.serie && row[2] === payload.numero) {
+                            rowsToDelete.push(index + 1); // +1 porque las filas de Sheets empiezan en 1
+                        }
+                    });
+                }
+                
+                // Si hay filas que eliminar, añadir la información al payload
+                if (rowsToDelete.length > 0) {
+                    payload.deleteRows = rowsToDelete;
+                    console.log('🔄 Factura existente detectada. Se actualizarán ' + rowsToDelete.length + ' filas.');
+                }
+            } catch (error) {
+                console.log('⚠️ No se pudo verificar facturas existentes, se guardará como nueva:', error);
+            }
             
             fetch(WEB_APP_URL, {
                 method: 'POST',
