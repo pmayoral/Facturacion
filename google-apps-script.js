@@ -53,49 +53,61 @@ function doPost(e) {
       // Crear una fila por cada línea de detalle con el nuevo formato
       data.itemsDetail.forEach((item, index) => {
         const row = [
-          data.fecha || '',           // Fecha
-          data.serie || '',           // Serie
-          data.numero || '',          // Número
-          data.nif || '',             // NIF
-          data.cliente || '',         // Cliente
-          data.direccion || '',       // Dirección
-          data.cp || '',              // CP
-          data.ciudad || '',          // Ciudad
-          data.provincia || '',       // Provincia
-          data.email || '',           // Email
-          data.descripcion || '',     // Descripción
-          data.textoLibre || '',      // Texto Libre
-          item.descripcion || '',     // Detalle
-          item.cantidad || '',        // Cantidad
-          item.precio || '',          // Precio
-          item.subtotal || '',        // Base Imponible
-          item.iva || '',             // IVA
-          item.total || ''            // Total
+          data.fecha || '',           // Columna A: Fecha
+          data.serie || '',           // Columna B: Serie
+          data.numero || '',          // Columna C: Número
+          data.nif || '',             // Columna D: NIF
+          data.cliente || '',         // Columna E: Cliente
+          data.direccion || '',       // Columna F: Dirección
+          data.cp || '',              // Columna G: CP
+          data.ciudad || '',          // Columna H: Ciudad
+          data.provincia || '',       // Columna I: Provincia
+          data.email || '',           // Columna J: Email
+          data.descripcion || '',     // Columna K: Descripción
+          data.textoLibre || '',      // Columna L: Texto Libre
+          item.descripcion || '',     // Columna M: Detalle
+          item.cantidad || '',        // Columna N: Cantidad
+          item.precio || '',          // Columna O: Precio
+          item.subtotal || '',        // Columna P: Base Imponible
+          item.iva || '',             // Columna Q: IVA
+          item.total || ''            // Columna R: Total
         ];
+        
+        console.log('🔍 DEBUG - Insertando fila ' + (index + 1) + ':');
+        console.log('  Texto Libre (L): ' + (data.textoLibre || '(vacío)'));
+        console.log('  Detalle (M): ' + (item.descripcion || '(vacío)'));
+        console.log('  Cantidad (N): ' + (item.cantidad || '(vacío)'));
+        console.log('  Precio (O): ' + (item.precio || '(vacío)'));
+        
         sheet.appendRow(row);
       });
     } else {
       // Modo clásico: una sola fila (cuando no hay detalle de items)
       const row = [
-        data.fecha || '',           // Fecha
-        data.serie || '',           // Serie
-        data.numero || '',          // Número
-        data.nif || '',             // NIF
-        data.cliente || '',         // Cliente
-        data.direccion || '',       // Dirección
-        data.cp || '',              // CP
-        data.ciudad || '',          // Ciudad
-        data.provincia || '',       // Provincia
-        data.email || '',           // Email
-        data.descripcion || '',     // Descripción
-        data.textoLibre || '',      // Texto Libre
-        data.items || '',           // Detalle (todos concatenados)
-        '',                         // Cantidad
-        '',                         // Precio
-        data.base || '',            // Base Imponible
-        data.iva || '',             // IVA
-        data.total || ''            // Total
+        data.fecha || '',           // Columna A: Fecha
+        data.serie || '',           // Columna B: Serie
+        data.numero || '',          // Columna C: Número
+        data.nif || '',             // Columna D: NIF
+        data.cliente || '',         // Columna E: Cliente
+        data.direccion || '',       // Columna F: Dirección
+        data.cp || '',              // Columna G: CP
+        data.ciudad || '',          // Columna H: Ciudad
+        data.provincia || '',       // Columna I: Provincia
+        data.email || '',           // Columna J: Email
+        data.descripcion || '',     // Columna K: Descripción
+        data.textoLibre || '',      // Columna L: Texto Libre
+        data.items || '',           // Columna M: Detalle (todos concatenados)
+        '',                         // Columna N: Cantidad
+        '',                         // Columna O: Precio
+        data.base || '',            // Columna P: Base Imponible
+        data.iva || '',             // Columna Q: IVA
+        data.total || ''            // Columna R: Total
       ];
+      
+      console.log('🔍 DEBUG - Insertando fila (modo clásico):');
+      console.log('  Texto Libre (L): ' + (data.textoLibre || '(vacío)'));
+      console.log('  Detalle (M): ' + (data.items || '(vacío)'));
+      
       sheet.appendRow(row);
     }
     
