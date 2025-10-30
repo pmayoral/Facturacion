@@ -1342,6 +1342,182 @@
             --color: #e74c3c;
             --hover: #c0392b;
         }
+
+        /* ========== EDITOR DE TEXTO ENRIQUECIDO ========== */
+        .editor-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            padding: 4px 6px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .editor-btn {
+            padding: 4px 8px;
+            border: none;
+            background: transparent;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.15s;
+            min-width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #495057;
+        }
+
+        .editor-btn:hover {
+            background: #e9ecef;
+            color: #212529;
+        }
+
+        .editor-btn:active {
+            background: #dee2e6;
+            transform: scale(0.95);
+        }
+
+        .editor-btn.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .editor-btn.active:hover {
+            background: #2980b9;
+        }
+
+        .editor-separator {
+            color: #dee2e6;
+            margin: 0 6px;
+            font-size: 16px;
+        }
+
+        .rich-text-editor {
+            min-height: 80px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 0 0 4px 4px;
+            background: white;
+            font-size: 14px;
+            line-height: 1.5;
+            outline: none;
+        }
+
+        .rich-text-editor:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .rich-text-editor:empty:before {
+            content: attr(data-placeholder);
+            color: #999;
+            font-style: italic;
+        }
+
+        .rich-text-editor ul {
+            margin-left: 20px;
+        }
+
+        /* ========== AUTOCOMPLETADO DE CLIENTES ========== */
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .autocomplete-dropdown.show {
+            display: block;
+        }
+
+        .autocomplete-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f2f5;
+            transition: background 0.15s;
+        }
+
+        .autocomplete-item:hover {
+            background: #f8f9fa;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-item-name {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 2px;
+            font-size: 13px;
+        }
+
+        .autocomplete-item-details {
+            font-size: 11px;
+            color: #7f8c8d;
+            line-height: 1.3;
+        }
+
+        .autocomplete-empty {
+            padding: 10px 12px;
+            text-align: center;
+            color: #95a5a6;
+            font-style: italic;
+            font-size: 12px;
+        }
+
+        .autocomplete-count {
+            padding: 6px 12px;
+            background: #e8f4f8;
+            border-bottom: 1px solid #bee5eb;
+            font-size: 11px;
+            color: #17a2b8;
+            font-weight: 500;
+        }
+
+        /* Botón para ver todos los clientes */
+        .btn-cliente-list {
+            padding: 8px 12px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+            min-width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .btn-cliente-list:hover {
+            background: #2980b9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .btn-cliente-list:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
@@ -1442,9 +1618,15 @@
                 
                 <!-- Datos del Cliente -->
                 <h3 style="margin: 10px 0 8px 0; color: #34495e;">Datos del Cliente</h3>
-                <div class="form-group">
+                <div class="form-group" style="position: relative;">
                     <label for="cliente-nombre">Nombre/Razón Social</label>
-                    <input type="text" id="cliente-nombre" placeholder="">
+                    <div style="position: relative; display: flex; gap: 8px; align-items: center;">
+                        <input type="text" id="cliente-nombre" placeholder="Escriba un cliente nuevo o seleccione uno existente..." autocomplete="off" style="flex: 1;">
+                        <button type="button" class="btn-cliente-list" onclick="toggleClientesList()" title="Ver todos los clientes">
+                            📋
+                        </button>
+                    </div>
+                    <div id="cliente-autocomplete" class="autocomplete-dropdown"></div>
                 </div>
                 
                 <div class="form-row">
@@ -1500,10 +1682,45 @@
                     <textarea id="operacion-descripcion" rows="2" placeholder="Descripción detallada de la operación realizada..."></textarea>
                 </div>
 
-                <!-- Nuevo campo de texto libre -->
+                <!-- Nuevo campo de texto libre con editor -->
                 <div class="form-group">
                     <label for="texto-libre">Texto libre (aparecerá al final de la factura)</label>
-                    <textarea id="texto-libre" rows="2" placeholder="Texto adicional que aparecerá en la parte inferior izquierda de la factura..."></textarea>
+                    
+                    <!-- Barra de herramientas del editor -->
+                    <div class="editor-toolbar">
+                        <button type="button" id="btn-bold" class="editor-btn" onclick="formatText('bold')" title="Negrita (Ctrl+B)">
+                            <strong>B</strong>
+                        </button>
+                        <button type="button" id="btn-italic" class="editor-btn" onclick="formatText('italic')" title="Cursiva (Ctrl+I)">
+                            <em>I</em>
+                        </button>
+                        <button type="button" id="btn-underline" class="editor-btn" onclick="formatText('underline')" title="Subrayado (Ctrl+U)">
+                            <u>U</u>
+                        </button>
+                        <span class="editor-separator">|</span>
+                        <button type="button" class="editor-btn" onclick="decreaseFontSize()" title="Reducir tamaño">
+                            A−
+                        </button>
+                        <button type="button" class="editor-btn" onclick="increaseFontSize()" title="Aumentar tamaño">
+                            A+
+                        </button>
+                        <span class="editor-separator">|</span>
+                        <button type="button" id="btn-list" class="editor-btn" onclick="formatText('insertUnorderedList')" title="Lista">
+                            •••
+                        </button>
+                        <button type="button" class="editor-btn" onclick="clearFormatting()" title="Limpiar formato">
+                            ✕
+                        </button>
+                    </div>
+                    
+                    <!-- Editor de texto enriquecido -->
+                    <div id="texto-libre" 
+                         contenteditable="true" 
+                         class="rich-text-editor"
+                         placeholder="Texto adicional que aparecerá en la parte inferior izquierda de la factura..."
+                         data-placeholder="Texto adicional que aparecerá en la parte inferior izquierda de la factura...">
+                    </div>
+                    <textarea id="texto-libre-hidden" style="display:none;"></textarea>
                 </div>
                 
                 <!-- Conceptos/Items -->
@@ -1832,7 +2049,7 @@
             return true;
         }
 
-        function generateInvoice() {
+        function generateInvoice(skipSavePrompt = false) {
             if (!validateForm()) {
                 showNotification('Por favor, complete todos los campos obligatorios', 'error');
                 return;
@@ -1872,7 +2089,7 @@
                     numero: domCache.get('factura-numero').value,
                     fecha: domCache.get('factura-fecha').value,
                     descripcionOperacion: domCache.get('operacion-descripcion').value,
-                    textoLibre: domCache.get('texto-libre').value
+                    textoLibre: domCache.get('texto-libre').innerHTML || ''
                 },
                 items: []
             };
@@ -1925,12 +2142,14 @@
             // Mostrar botón de imprimir en el header
             showPrintButton();
             
-            // Preguntar si desea guardar la factura
-            setTimeout(() => {
-                if (confirm('¿Desea guardar esta factura en Google Sheets?')) {
-                    saveInvoiceAutomatically(invoiceData);
-                }
-            }, 500); // Pequeño delay para que se vea primero la factura
+            // Preguntar si desea guardar la factura (solo si no se especifica skipSavePrompt)
+            if (!skipSavePrompt) {
+                setTimeout(() => {
+                    if (confirm('¿Desea guardar esta factura en Google Sheets?')) {
+                        saveInvoiceAutomatically(invoiceData);
+                    }
+                }, 500); // Pequeño delay para que se vea primero la factura
+            }
         }
 
         function renderInvoice(data) {
@@ -1942,15 +2161,18 @@
 
             let itemsHTML = '';
             data.items.forEach(item => {
+                // Si cantidad es 0 o 1, y precio es 0, dejar campos en blanco
+                const shouldBeBlank = (item.cantidad === 0 || item.cantidad === 1) && item.precio === 0;
+                
                 itemsHTML += `
                     <tr style="font-size: 8pt;">
                         <td style="border: 1px solid #000; padding: 5px; text-align: left;">${item.descripcion}</td>
-                        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${formatNumber(item.cantidad)}</td>
-                        <td style="border: 1px solid #000; padding: 5px; text-align: right;">${formatNumber(item.precio)}</td>
+                        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${shouldBeBlank ? '' : formatNumber(item.cantidad)}</td>
+                        <td style="border: 1px solid #000; padding: 5px; text-align: right;">${shouldBeBlank ? '' : formatNumber(item.precio)}</td>
                         <td style="border: 1px solid #000; padding: 5px; text-align: center;"></td>
-                        <td style="border: 1px solid #000; padding: 5px; text-align: right;">${formatNumber(item.subtotal)}</td>
-                        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${item.iva}</td>
-                        <td style="border: 1px solid #000; padding: 5px; text-align: right;">${formatNumber(item.total)}</td>
+                        <td style="border: 1px solid #000; padding: 5px; text-align: right;">${shouldBeBlank ? '' : formatNumber(item.subtotal)}</td>
+                        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${shouldBeBlank ? '' : item.iva}</td>
+                        <td style="border: 1px solid #000; padding: 5px; text-align: right;">${shouldBeBlank ? '' : formatNumber(item.total)}</td>
                     </tr>
                 `;
             });
@@ -2133,7 +2355,8 @@
             // Añadir texto libre si existe
             const textoLibreElement = document.getElementById('texto-libre-factura');
             if (data.factura.textoLibre && textoLibreElement) {
-                textoLibreElement.innerHTML = data.factura.textoLibre.replace(/\n/g, '<br>');
+                // El texto ya viene con formato HTML del editor
+                textoLibreElement.innerHTML = data.factura.textoLibre;
             }
             
             // OCULTAR EL TEXTO LEGAL SI EL TOTAL ES MENOR A 1000
@@ -2153,6 +2376,369 @@
                 useGrouping: true
             });
         }
+
+        // ========== FUNCIONES DEL EDITOR DE TEXTO ENRIQUECIDO ==========
+        let currentFontSize = 3; // Tamaño base (1=10px, 2=13px, 3=16px, 4=18px, 5=24px, 6=32px, 7=48px)
+        
+        function formatText(command) {
+            document.execCommand(command, false, null);
+            document.getElementById('texto-libre').focus();
+            updateToolbarState();
+        }
+        
+        function updateToolbarState() {
+            // Actualizar estado de los botones según el formato aplicado
+            const isBold = document.queryCommandState('bold');
+            const isItalic = document.queryCommandState('italic');
+            const isUnderline = document.queryCommandState('underline');
+            const isList = document.queryCommandState('insertUnorderedList');
+            
+            // Actualizar clases de los botones
+            const btnBold = document.getElementById('btn-bold');
+            const btnItalic = document.getElementById('btn-italic');
+            const btnUnderline = document.getElementById('btn-underline');
+            const btnList = document.getElementById('btn-list');
+            
+            if (btnBold) {
+                btnBold.classList.toggle('active', isBold);
+            }
+            if (btnItalic) {
+                btnItalic.classList.toggle('active', isItalic);
+            }
+            if (btnUnderline) {
+                btnUnderline.classList.toggle('active', isUnderline);
+            }
+            if (btnList) {
+                btnList.classList.toggle('active', isList);
+            }
+        }
+
+        function increaseFontSize() {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+            
+            // Obtener el tamaño actual del texto seleccionado
+            const parentElement = selection.anchorNode.parentElement;
+            const currentSize = getFontSizeLevel(parentElement);
+            
+            // Incrementar (máximo 7)
+            const newSize = Math.min(currentSize + 1, 7);
+            document.execCommand('fontSize', false, newSize.toString());
+            document.getElementById('texto-libre').focus();
+            updateToolbarState();
+        }
+
+        function decreaseFontSize() {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+            
+            // Obtener el tamaño actual del texto seleccionado
+            const parentElement = selection.anchorNode.parentElement;
+            const currentSize = getFontSizeLevel(parentElement);
+            
+            // Decrementar (mínimo 1)
+            const newSize = Math.max(currentSize - 1, 1);
+            document.execCommand('fontSize', false, newSize.toString());
+            document.getElementById('texto-libre').focus();
+            updateToolbarState();
+        }
+
+        function getFontSizeLevel(element) {
+            // Intentar obtener el nivel de tamaño de fuente del elemento
+            if (element && element.tagName === 'FONT') {
+                const size = parseInt(element.getAttribute('size'));
+                if (!isNaN(size)) return size;
+            }
+            
+            // Si no hay tamaño específico, devolver el tamaño base
+            return 3;
+        }
+
+        function clearFormatting() {
+            document.execCommand('removeFormat', false, null);
+            document.getElementById('texto-libre').focus();
+            updateToolbarState();
+        }
+
+        // Sincronizar contenido del editor con campo hidden para el envío
+        function syncEditorContent() {
+            const editor = document.getElementById('texto-libre');
+            const hidden = document.getElementById('texto-libre-hidden');
+            if (editor && hidden) {
+                hidden.value = editor.innerHTML;
+            }
+        }
+
+        // Atajos de teclado para el editor
+        document.addEventListener('DOMContentLoaded', () => {
+            const editor = document.getElementById('texto-libre');
+            if (editor) {
+                editor.addEventListener('keydown', (e) => {
+                    // Ctrl+B = Negrita
+                    if (e.ctrlKey && e.key === 'b') {
+                        e.preventDefault();
+                        formatText('bold');
+                    }
+                    // Ctrl+I = Cursiva
+                    if (e.ctrlKey && e.key === 'i') {
+                        e.preventDefault();
+                        formatText('italic');
+                    }
+                    // Ctrl+U = Subrayado
+                    if (e.ctrlKey && e.key === 'u') {
+                        e.preventDefault();
+                        formatText('underline');
+                    }
+                });
+                
+                // Actualizar estado de la barra al mover el cursor o seleccionar texto
+                editor.addEventListener('keyup', updateToolbarState);
+                editor.addEventListener('mouseup', updateToolbarState);
+                editor.addEventListener('click', updateToolbarState);
+                
+                // Sincronizar al escribir
+                editor.addEventListener('input', syncEditorContent);
+            }
+        });
+
+        // ========== SISTEMA DE AUTOCOMPLETADO DE CLIENTES ==========
+        let clientesCache = [];
+        let autoCompleteDebounceTimer = null;
+
+        function loadClientesForAutocomplete() {
+            if (!invoicesData || invoicesData.length === 0) return;
+            
+            // Debug: mostrar todas las columnas disponibles
+            if (invoicesData.length > 0) {
+                console.log('=== COLUMNAS DISPONIBLES EN GOOGLE SHEETS ===');
+                console.log(Object.keys(invoicesData[0]));
+                console.log('=== EJEMPLO PRIMERA FACTURA ===');
+                console.log(invoicesData[0]);
+            }
+            
+            // Extraer clientes únicos
+            const clientesMap = new Map();
+            invoicesData.forEach(invoice => {
+                const nombre = invoice['Cliente'];
+                if (nombre && !clientesMap.has(nombre)) {
+                    clientesMap.set(nombre, {
+                        nombre: nombre,
+                        nif: invoice['NIF'] || invoice['NIF Cliente'] || '',
+                        direccion: invoice['Dirección'] || invoice['Dirección Cliente'] || '',
+                        cp: invoice['CP'] || invoice['CP Cliente'] || '',
+                        ciudad: invoice['Ciudad'] || invoice['Ciudad Cliente'] || '',
+                        provincia: invoice['Provincia'] || invoice['Provincia Cliente'] || '',
+                        email: invoice['Email'] || invoice['Email Cliente'] || ''
+                    });
+                }
+            });
+            
+            clientesCache = Array.from(clientesMap.values());
+            
+            // Debug: mostrar en consola los clientes cargados
+            console.log('=== CLIENTES EXTRAÍDOS ===');
+            console.log('Total clientes:', clientesCache.length);
+            if (clientesCache.length > 0) {
+                console.log('Ejemplo primer cliente:', clientesCache[0]);
+            }
+        }
+
+        function showAutocomplete(searchText) {
+            const dropdown = document.getElementById('cliente-autocomplete');
+            if (!dropdown) return;
+            
+            if (!searchText || searchText.length < 2) {
+                dropdown.classList.remove('show');
+                return;
+            }
+            
+            // Filtrar clientes
+            const searchLower = searchText.toLowerCase();
+            const matches = clientesCache.filter(cliente => 
+                cliente.nombre.toLowerCase().includes(searchLower) ||
+                (cliente.nif && cliente.nif.toLowerCase().includes(searchLower))
+            );
+            
+            if (matches.length === 0) {
+                dropdown.innerHTML = '<div class="autocomplete-empty">No se encontraron clientes</div>';
+                dropdown.classList.add('show');
+                return;
+            }
+            
+            let html = `<div class="autocomplete-count">📋 ${matches.length} cliente${matches.length > 1 ? 's' : ''} encontrado${matches.length > 1 ? 's' : ''}</div>`;
+            
+            matches.slice(0, 10).forEach(cliente => {
+                html += `
+                    <div class="autocomplete-item" onclick="selectCliente('${cliente.nombre.replace(/'/g, "\\'")}')">
+                        <div class="autocomplete-item-name">${cliente.nombre}</div>
+                        <div class="autocomplete-item-details">
+                            ${cliente.nif ? `${cliente.nif} • ` : ''}${cliente.ciudad || ''}${cliente.provincia ? ` (${cliente.provincia})` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            dropdown.innerHTML = html;
+            dropdown.classList.add('show');
+        }
+
+        function toggleClientesList() {
+            const dropdown = document.getElementById('cliente-autocomplete');
+            if (!dropdown) return;
+            
+            // Si ya está visible, ocultarlo
+            if (dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+                return;
+            }
+            
+            // Si no hay clientes cargados, cargarlos automáticamente
+            if (clientesCache.length === 0) {
+                loadClientesFromSheets();
+                return;
+            }
+            
+            // Mostrar TODOS los clientes
+            displayAllClientes();
+        }
+
+        function loadClientesFromSheets() {
+            const dropdown = document.getElementById('cliente-autocomplete');
+            if (!dropdown) return;
+            
+            // Mostrar mensaje de carga
+            dropdown.innerHTML = '<div class="autocomplete-count">⏳ Cargando clientes...</div>';
+            dropdown.classList.add('show');
+            
+            // Cargar facturas desde Google Sheets
+            fetch(WEB_APP_URL + '?action=read')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.result === 'success' && data.data && data.data.length > 0) {
+                        invoicesData = data.data;
+                        
+                        // Extraer clientes únicos
+                        loadClientesForAutocomplete();
+                        
+                        // Mostrar los clientes
+                        displayAllClientes();
+                        
+                        showNotification(`✅ ${clientesCache.length} cliente${clientesCache.length > 1 ? 's' : ''} cargado${clientesCache.length > 1 ? 's' : ''}`, 'success', 3000);
+                    } else {
+                        dropdown.innerHTML = '<div class="autocomplete-empty">No se encontraron facturas en Google Sheets</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al cargar clientes:', error);
+                    dropdown.innerHTML = '<div class="autocomplete-empty">Error al cargar clientes. Verifique la conexión.</div>';
+                    showNotification('Error al cargar clientes desde Google Sheets', 'error', 5000);
+                });
+        }
+
+        function displayAllClientes() {
+            const dropdown = document.getElementById('cliente-autocomplete');
+            if (!dropdown) return;
+            
+            if (clientesCache.length === 0) {
+                dropdown.innerHTML = '<div class="autocomplete-empty">No hay clientes disponibles</div>';
+                dropdown.classList.add('show');
+                return;
+            }
+            
+            // Mostrar TODOS los clientes
+            let html = `<div class="autocomplete-count">📋 ${clientesCache.length} cliente${clientesCache.length > 1 ? 's' : ''} disponible${clientesCache.length > 1 ? 's' : ''}</div>`;
+            
+            // Ordenar clientes alfabéticamente
+            const sortedClientes = [...clientesCache].sort((a, b) => 
+                a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' })
+            );
+            
+            // Mostrar todos (máximo 50 para no saturar)
+            sortedClientes.slice(0, 50).forEach(cliente => {
+                html += `
+                    <div class="autocomplete-item" onclick="selectCliente('${cliente.nombre.replace(/'/g, "\\'")}')">
+                        <div class="autocomplete-item-name">${cliente.nombre}</div>
+                        <div class="autocomplete-item-details">
+                            ${cliente.nif ? `${cliente.nif} • ` : ''}${cliente.ciudad || ''}${cliente.provincia ? ` (${cliente.provincia})` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            if (clientesCache.length > 50) {
+                html += `<div class="autocomplete-count">... y ${clientesCache.length - 50} más (use el buscador)</div>`;
+            }
+            
+            dropdown.innerHTML = html;
+            dropdown.classList.add('show');
+        }
+
+        function selectCliente(nombreCliente) {
+            const cliente = clientesCache.find(c => c.nombre === nombreCliente);
+            if (!cliente) {
+                console.error('Cliente no encontrado:', nombreCliente);
+                return;
+            }
+            
+            console.log('Seleccionando cliente:', cliente);
+            
+            // Rellenar todos los campos del cliente
+            const nombreInput = document.getElementById('cliente-nombre');
+            const nifInput = document.getElementById('cliente-nif');
+            const emailInput = document.getElementById('cliente-email');
+            const direccionInput = document.getElementById('cliente-direccion');
+            const cpInput = document.getElementById('cliente-cp');
+            const ciudadInput = document.getElementById('cliente-ciudad');
+            const provinciaInput = document.getElementById('cliente-provincia');
+            
+            if (nombreInput) nombreInput.value = cliente.nombre || '';
+            if (nifInput) nifInput.value = cliente.nif || '';
+            if (emailInput) emailInput.value = cliente.email || '';
+            if (direccionInput) direccionInput.value = cliente.direccion || '';
+            if (cpInput) cpInput.value = cliente.cp || '';
+            if (ciudadInput) ciudadInput.value = cliente.ciudad || '';
+            if (provinciaInput) provinciaInput.value = cliente.provincia || '';
+            
+            console.log('Campos rellenados:', {
+                nombre: nombreInput?.value,
+                nif: nifInput?.value,
+                email: emailInput?.value,
+                direccion: direccionInput?.value,
+                cp: cpInput?.value,
+                ciudad: ciudadInput?.value,
+                provincia: provinciaInput?.value
+            });
+            
+            // Ocultar dropdown
+            const dropdown = document.getElementById('cliente-autocomplete');
+            if (dropdown) dropdown.classList.remove('show');
+            
+            // Mostrar notificación
+            showNotification(`Cliente "${cliente.nombre}" cargado correctamente`, 'success', 3000);
+        }
+
+        // Event listener para el campo de cliente-nombre
+        document.addEventListener('DOMContentLoaded', () => {
+            const clienteNombreInput = document.getElementById('cliente-nombre');
+            if (clienteNombreInput) {
+                clienteNombreInput.addEventListener('input', (e) => {
+                    clearTimeout(autoCompleteDebounceTimer);
+                    autoCompleteDebounceTimer = setTimeout(() => {
+                        showAutocomplete(e.target.value);
+                    }, 300);
+                });
+                
+                // Ocultar dropdown al hacer clic fuera
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('#cliente-nombre') && 
+                        !e.target.closest('#cliente-autocomplete') && 
+                        !e.target.closest('.btn-cliente-list')) {
+                        const dropdown = document.getElementById('cliente-autocomplete');
+                        if (dropdown) dropdown.classList.remove('show');
+                    }
+                });
+            }
+        });
 
         function calculateCRC8(data) {
             // Simulación del cálculo CRC8 para TBAI
@@ -2510,6 +3096,18 @@
         }
         
         // Guardar automáticamente (proceso invisible)
+        // Función para limpiar HTML y convertir a texto plano
+        function stripHtmlToPlainText(html) {
+            if (!html) return '';
+            
+            // Crear un elemento temporal
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+            
+            // Obtener solo el texto (sin tags HTML)
+            return temp.textContent || temp.innerText || '';
+        }
+
         function saveInvoiceAutomatically(invoiceData) {
             // Preparar datos para insertar
             const itemsDescription = invoiceData.items.map(item => 
@@ -2517,6 +3115,9 @@
             ).join('; ');
             
             const fechaData = processFechaHora(invoiceData.factura.fecha);
+            
+            // Limpiar el texto libre de HTML para guardar como texto plano
+            const textoLibrePlano = stripHtmlToPlainText(invoiceData.factura.textoLibre);
             
             // Datos a enviar con el nuevo formato
             const payload = {
@@ -2531,7 +3132,7 @@
                 provincia: invoiceData.cliente.provincia,
                 email: invoiceData.cliente.email,
                 descripcion: invoiceData.factura.descripcionOperacion,
-                textoLibre: invoiceData.factura.textoLibre || '',
+                textoLibre: textoLibrePlano,
                 base: formatNumber(invoiceData.totales.subtotal),
                 iva: formatNumber(invoiceData.totales.iva),
                 total: formatNumber(invoiceData.totales.total),
@@ -2596,30 +3197,44 @@
             
             const fechaData = processFechaHora(invoiceData.factura.fecha);
             
-            // Preparar datos para el Web App
-            const formData = new FormData();
-            formData.append('fecha', fechaData.solo_fecha);
-            formData.append('serie', invoiceData.factura.serie);
-            formData.append('numero', invoiceData.factura.numero);
-            formData.append('cliente', invoiceData.cliente.nombre);
-            formData.append('nif', invoiceData.cliente.nif);
-            formData.append('email', invoiceData.cliente.email);
-            formData.append('direccion', invoiceData.cliente.direccion);
-            formData.append('ciudad', invoiceData.cliente.ciudad);
-            formData.append('cp', invoiceData.cliente.cp);
-            formData.append('base', formatNumber(invoiceData.totales.subtotal));
-            formData.append('iva', formatNumber(invoiceData.totales.iva));
-            formData.append('total', formatNumber(invoiceData.totales.total));
-            formData.append('descripcion', invoiceData.factura.descripcionOperacion);
-            formData.append('items', itemsDescription);
+            // Limpiar el texto libre de HTML
+            const textoLibrePlano = stripHtmlToPlainText(invoiceData.factura.textoLibre);
             
-            // IMPORTANTE: Reemplaza esta URL con la nueva URL de tu Web App después del despliegue
-            //const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzpbyF9R3O24Xik25abruW8jUy6DrsyRgBsJDpWRfVFxmZrdq5Gr7NYHu2FS1MWb-ly/exec';
-            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx6Bv3I-L_BpQLWwSjHUJRIxh5vK7Et5IqC1psOpmUW5sCKGZUiggwKJ6MzpX50FRUj/exec';
+            // Datos a enviar con el mismo formato que saveInvoiceAutomatically
+            const payload = {
+                fecha: fechaData.solo_fecha,
+                serie: invoiceData.factura.serie,
+                numero: invoiceData.factura.numero,
+                nif: invoiceData.cliente.nif,
+                cliente: invoiceData.cliente.nombre,
+                direccion: invoiceData.cliente.direccion,
+                cp: invoiceData.cliente.cp,
+                ciudad: invoiceData.cliente.ciudad,
+                provincia: invoiceData.cliente.provincia,
+                email: invoiceData.cliente.email,
+                descripcion: invoiceData.factura.descripcionOperacion,
+                textoLibre: textoLibrePlano,
+                base: formatNumber(invoiceData.totales.subtotal),
+                iva: formatNumber(invoiceData.totales.iva),
+                total: formatNumber(invoiceData.totales.total),
+                items: itemsDescription,
+                // Enviar también el detalle de cada línea
+                itemsDetail: invoiceData.items.map(item => ({
+                    descripcion: item.descripcion,
+                    cantidad: formatNumber(item.cantidad),
+                    precio: formatNumber(item.precio),
+                    subtotal: formatNumber(item.subtotal),
+                    iva: formatNumber(item.subtotal * item.iva / 100),
+                    total: formatNumber(item.total)
+                }))
+            };
             
             fetch(WEB_APP_URL, {
                 method: 'POST',
-                body: formData
+                headers: {
+                    'Content-Type': 'text/plain',
+                },
+                body: JSON.stringify(payload)
             })
             .then(response => response.json())
             .then(data => {
@@ -2780,7 +3395,7 @@
                     numero: document.getElementById('factura-numero').value,
                     fecha: document.getElementById('factura-fecha').value,
                     descripcionOperacion: document.getElementById('operacion-descripcion').value,
-                    textoLibre: document.getElementById('texto-libre').value
+                    textoLibre: document.getElementById('texto-libre').innerHTML || ''
                 },
                 items: []
             };
@@ -2986,6 +3601,9 @@
                         renderGrid();
                         updateStatus();
                         updateSaveSortButton();
+                        
+                        // Cargar clientes para autocompletado
+                        loadClientesForAutocomplete();
                         
                         // Mostrar tiempo de carga
                         const loadTime = ((performance.now() - startTime) / 1000).toFixed(2);
@@ -4706,31 +5324,51 @@
                 inv['Serie'] === serie && inv['Número'] === numero
             );
             
-            // Mostrar confirmación con los datos de la factura
-            const lineCount = allInvoiceLines.length;
-            const lineText = lineCount > 1 ? ` (${lineCount} líneas)` : '';
+            // Verificar si estamos en una vista de grid abierta en nueva pestaña
+            const urlParams = new URLSearchParams(window.location.search);
+            const isGridView = urlParams.get('view') === 'grid';
             
-            if (confirm(`¿Desea cargar la factura ${serie}-${numero}${lineText} del cliente "${cliente}"?`)) {
-                // Verificar si esta ventana fue abierta desde otra pestaña
-                if (window.opener && !window.opener.closed) {
-                    // Enviar datos a la pestaña padre
+            // Si estamos en vista grid (nueva pestaña) y hay un opener
+            if (isGridView && window.opener && !window.opener.closed) {
+                // Enviar datos a la pestaña padre
+                try {
+                    window.opener.postMessage({
+                        type: 'LOAD_INVOICE',
+                        data: allInvoiceLines
+                    }, '*');
+                    
+                    // Técnica para forzar cambio de pestaña
+                    window.opener.focus();
+                    window.blur();
+                    
+                    // Intentar varias técnicas para forzar el cambio
                     try {
-                        window.opener.receiveInvoiceData(allInvoiceLines);
-                        window.opener.focus(); // Cambiar foco a la pestaña padre
-                        // Cerrar esta pestaña después de un breve delay
-                        setTimeout(() => {
-                            window.close();
-                        }, 1000);
-                    } catch (error) {
-                        // Si falla, cargar en esta pestaña
-                        loadInvoiceDataMultiLine(allInvoiceLines);
-                        toggleGridView();
-                    }
-                } else {
-                    // Si no hay pestaña padre, cargar normalmente en esta pestaña
+                        // Disparar eventos en la ventana padre para activarla
+                        const evt = new window.opener.Event('focus', { bubbles: true, cancelable: false });
+                        window.opener.dispatchEvent(evt);
+                    } catch(e) {}
+                    
+                    // Crear un elemento temporal que fuerce el foco
+                    try {
+                        const tempLink = window.opener.document.createElement('a');
+                        tempLink.style.position = 'fixed';
+                        tempLink.style.opacity = '0';
+                        tempLink.style.pointerEvents = 'none';
+                        window.opener.document.body.appendChild(tempLink);
+                        tempLink.focus();
+                        window.opener.document.body.removeChild(tempLink);
+                    } catch(e) {}
+                    
+                } catch (error) {
+                    console.error('Error al enviar datos a la ventana padre:', error);
+                    // Si falla, cargar en esta pestaña
                     loadInvoiceDataMultiLine(allInvoiceLines);
                     toggleGridView();
                 }
+            } else {
+                // Si no hay pestaña padre, cargar normalmente en esta pestaña
+                loadInvoiceDataMultiLine(allInvoiceLines);
+                toggleGridView();
             }
         }
         
@@ -5024,7 +5662,7 @@
             document.getElementById('factura-fecha').value = formatInvoiceDate(invoice['Fecha']);
             
             document.getElementById('operacion-descripcion').value = invoice['Descripción'] || '';
-            document.getElementById('texto-libre').value = invoice['Texto Libre'] || '';
+            document.getElementById('texto-libre').innerHTML = invoice['Texto Libre'] || '';
             
             // Cargar detalle si existe
             if (invoice['Detalle']) {
@@ -5060,7 +5698,7 @@
             document.getElementById('factura-numero').value = firstLine['Número'] || '';
             document.getElementById('factura-fecha').value = formatInvoiceDate(firstLine['Fecha']);
             document.getElementById('operacion-descripcion').value = firstLine['Descripción'] || '';
-            document.getElementById('texto-libre').value = firstLine['Texto Libre'] || '';
+            document.getElementById('texto-libre').innerHTML = firstLine['Texto Libre'] || '';
             
             // Cargar cada línea como un concepto separado
             invoiceLines.forEach((line, index) => {
@@ -5812,6 +6450,55 @@
                 }, 100);
             }
         }
+
+        // Variable para controlar el parpadeo del título
+        let titleBlinkInterval = null;
+        const originalTitle = document.title;
+        
+        // Listener para recibir mensajes de ventanas hijas (listado de facturas)
+        window.addEventListener('message', (event) => {
+            // Verificar que el mensaje es del tipo correcto
+            if (event.data && event.data.type === 'LOAD_INVOICE') {
+                const allInvoiceLines = event.data.data;
+                if (allInvoiceLines && allInvoiceLines.length > 0) {
+                    // Hacer parpadear el título de la pestaña
+                    let blinkCount = 0;
+                    if (titleBlinkInterval) clearInterval(titleBlinkInterval);
+                    
+                    titleBlinkInterval = setInterval(() => {
+                        document.title = blinkCount % 2 === 0 ? '🔔 ¡FACTURA LISTA!' : originalTitle;
+                        blinkCount++;
+                        if (blinkCount > 20) { // Parpadear 10 veces
+                            clearInterval(titleBlinkInterval);
+                            document.title = originalTitle;
+                        }
+                    }, 500);
+                    
+                    // Cargar datos en el formulario
+                    loadInvoiceDataMultiLine(allInvoiceLines);
+                    
+                    // Si el grid está visible, ocultarlo
+                    const gridSection = document.getElementById('grid-section');
+                    const mainContainer = document.querySelector('.container');
+                    if (gridSection && gridSection.style.display !== 'none') {
+                        toggleGridView();
+                    }
+                    
+                    // Generar automáticamente la vista previa sin preguntar si desea guardar
+                    setTimeout(() => {
+                        generateInvoice(true);
+                    }, 300); // Pequeño delay para asegurar que los datos estén cargados
+                }
+            }
+        });
+        
+        // Detener parpadeo cuando la ventana recibe el foco
+        window.addEventListener('focus', () => {
+            if (titleBlinkInterval) {
+                clearInterval(titleBlinkInterval);
+                document.title = originalTitle;
+            }
+        });
 
         // Inicializar cuando el DOM esté listo
         document.addEventListener('DOMContentLoaded', () => {
